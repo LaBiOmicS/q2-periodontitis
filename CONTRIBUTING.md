@@ -7,7 +7,7 @@ Thank you for your interest in contributing to `q2-periodontitis`! We welcome co
 ## 🚀 How to Contribute
 
 ### 1. Reporting Bugs
-- Search existing [GitHub Issues](https://github.com/fabianomenegidio/q2-periodontitis/issues) to verify the bug hasn't been reported.
+- Search existing [GitHub Issues](https://github.com/LaBiOmicS/q2-periodontitis/issues) to verify the bug hasn't been reported.
 - Open a new issue using the **Bug Report** template.
 - Include full CLI command invocations, QIIME 2 version, and complete error tracebacks.
 

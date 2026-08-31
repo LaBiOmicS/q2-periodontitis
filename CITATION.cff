@@ -7,7 +7,7 @@ authors:
 title: "q2-periodontitis: QIIME 2 Plugin for Subgingival Biofilm Ecological Characterization, Socransky Complexes Collapse, and Dysbiosis Indices"
 version: 0.1.0
 date-released: 2026-08-31
-url: "https://github.com/fabianomenegidio/q2-periodontitis"
+url: "https://github.com/LaBiOmicS/q2-periodontitis"
 keywords:
   - periodontitis
   - qiime2

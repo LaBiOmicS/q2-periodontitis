@@ -23,7 +23,7 @@ citations = Citations.load('citations.bib', package='q2_periodontitis')
 plugin = Plugin(
     name='periodontitis',
     version=__version__,
-    website='https://github.com/fabianomenegidio/q2-periodontitis',
+    website='https://github.com/LaBiOmicS/q2-periodontitis',
     package='q2_periodontitis',
     citations=[citations['socransky1998microbial'], citations['hajishengallis2012keystone'], citations['curtis2020periodontal']],
     description='QIIME 2 plugin for subgingival biofilm ecological characterization, Socransky complexes collapse, and dysbiosis indices.',

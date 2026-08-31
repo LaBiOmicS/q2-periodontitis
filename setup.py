@@ -8,7 +8,7 @@ setup(
     author_email="fabiano.menegidio@example.com",
     description="QIIME 2 plugin for subgingival biofilm ecological characterization, Socransky complexes collapse, and dysbiosis indices.",
     license="BSD-3-Clause",
-    url="https://github.com/fabianomenegidio/q2-periodontitis",
+    url="https://github.com/LaBiOmicS/q2-periodontitis",
     entry_points={
         "qiime2.plugins": [
             "q2-periodontitis=q2_periodontitis.plugin_setup:plugin"

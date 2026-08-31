@@ -148,7 +148,7 @@ $$\Delta KRS_i = KRS_{i, \text{Target}} - KRS_{i, \text{Baseline}}$$
 In your active QIIME 2 environment, install directly from source:
 
 ```bash
-pip install git+https://github.com/fabianomenegidio/q2-periodontitis.git
+pip install git+https://github.com/LaBiOmicS/q2-periodontitis.git
 ```
 
 ### Installation for Local Development
@@ -156,7 +156,7 @@ pip install git+https://github.com/fabianomenegidio/q2-periodontitis.git
 Alternatively, clone the repository and install in editable mode:
 
 ```bash
-git clone https://github.com/fabianomenegidio/q2-periodontitis.git
+git clone https://github.com/LaBiOmicS/q2-periodontitis.git
 cd q2-periodontitis
 pip install -e .
 ```
