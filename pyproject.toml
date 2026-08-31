@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "q2-periodontitis"
+version = "2026.1.0"
+description = "QIIME 2 plugin for subgingival biofilm ecological characterization, Socransky complexes collapse, and dysbiosis indices."
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+authors = [
+    { name = "Fabiano Menegidio", email = "fabiano.menegidio@example.com" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics"
+]
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "biom-format",
+    "scikit-bio",
+    "jinja2"
+]

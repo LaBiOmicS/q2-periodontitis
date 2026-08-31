@@ -1,0 +1,74 @@
+taxon	complex	level
+Porphyromonas gingivalis	Red	species
+Tannerella forsythia	Red	species
+Treponema denticola	Red	species
+Porphyromonas	Red	genus
+Tannerella	Red	genus
+Fusobacterium nucleatum	Orange	species
+Fusobacterium nucleatum subsp. nucleatum	Orange	species
+Fusobacterium nucleatum subsp. polymorphum	Orange	species
+Fusobacterium nucleatum subsp. vincentii	Orange	species
+Fusobacterium nucleatum subsp. animalis	Orange	species
+Prevotella intermedia	Orange	species
+Prevotella nigrescens	Orange	species
+Parvimonas micra	Orange	species
+Campylobacter rectus	Orange	species
+Campylobacter showae	Orange	species
+Campylobacter gracilis	Orange	species
+Eubacterium nodatum	Orange	species
+Streptococcus constellatus	Orange	species
+Fusobacterium	Orange	genus
+Prevotella	Orange	genus
+Parvimonas	Orange	genus
+Filifactor alocis	Extended	species
+Aggregatibacter actinomycetemcomitans	Extended	species
+Fretibacterium fastidiosum	Extended	species
+Fretibacterium human oral taxon 361	Extended	species
+Treponema maltophilum	Extended	species
+Treponema lecithinolyticum	Extended	species
+Treponema medium	Extended	species
+Selenomonas sputigena	Extended	species
+Desulfobulbus	Extended	genus
+Filifactor	Extended	genus
+Aggregatibacter	Extended	genus
+Fretibacterium	Extended	genus
+Streptococcus gordonii	Yellow	species
+Streptococcus mitis	Yellow	species
+Streptococcus oralis	Yellow	species
+Streptococcus sanguinis	Yellow	species
+Streptococcus intermedius	Yellow	species
+Streptococcus cristatus	Yellow	species
+Streptococcus parasanguinis	Yellow	species
+Streptococcus mutans	Yellow	species
+Streptococcus	Yellow	genus
+Rothia mucilaginosa	Yellow	species
+Rothia dentocariosa	Yellow	species
+Rothia aeria	Yellow	species
+Rothia	Yellow	genus
+Actinomyces naeslundii	Blue	species
+Actinomyces viscosus	Blue	species
+Actinomyces israelii	Blue	species
+Actinomyces gerencseriae	Blue	species
+Actinomyces odontolyticus	Blue	species
+Actinomyces	Blue	genus
+Schaalia odontolytica	Blue	species
+Schaalia	Blue	genus
+Corynebacterium matruchotii	Blue	species
+Corynebacterium	Blue	genus
+Eikenella corrodens	Green	species
+Capnocytophaga gingivalis	Green	species
+Capnocytophaga ochracea	Green	species
+Capnocytophaga sputigena	Green	species
+Capnocytophaga granulosa	Green	species
+Capnocytophaga haemolytica	Green	species
+Campylobacter concisus	Green	species
+Neisseria subflava	Green	species
+Neisseria mucosa	Green	species
+Neisseria	Green	genus
+Capnocytophaga	Green	genus
+Eikenella	Green	genus
+Veillonella parvula	Purple	species
+Veillonella atypica	Purple	species
+Veillonella dispar	Purple	species
+Veillonella rogosae	Purple	species
+Veillonella	Purple	genus

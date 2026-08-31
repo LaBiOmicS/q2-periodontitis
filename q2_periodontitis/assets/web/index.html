@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>q2-periodontitis: Periodontal Biofilm & Dysbiosis Report</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>q2-periodontitis Analytical Dashboard</h1>
+            <p>Subgingival Biofilm Socransky Complexes Collapse & Clinical Dysbiosis Metrics</p>
+        </header>
+
+        <!-- Summary & Data Export -->
+        <div class="card">
+            <h2>Summary Overview & Data Download</h2>
+            <p>Total Samples: <strong>{{ total_samples }}</strong> | Total Features Mapped: <strong>{{ total_features }}</strong></p>
+            <p>
+                <a href="data/complexes.tsv" download class="btn">Download Complexes TSV</a>
+                <a href="data/indices.tsv" download class="btn">Download Dysbiosis Indices TSV</a>
+            </p>
+        </div>
+
+        <!-- Interactive Barplot Card -->
+        <div class="card">
+            <h2>Socransky Ecological Complexes Distribution</h2>
+            <div id="complexes-plot" class="chart-container"></div>
+        </div>
+
+        <!-- Dysbiosis Indices Plot Card -->
+        <div class="card">
+            <h2>Periodontal Microbial Dysbiosis Index (pMDI) vs Socransky Weighted Load (SWL)</h2>
+            <div id="indices-plot" class="chart-container"></div>
+        </div>
+
+        <!-- Resolution Audit Card -->
+        <div class="card">
+            <h2>Taxonomic Resolution Audit</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Resolution Level</th>
+                            <th>Count</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for level, count in resolution_counts.items() %}
+                        <tr>
+                            <td><strong>{{ level | capitalize }}</strong></td>
+                            <td>{{ count }}</td>
+                            <td>{{ "%.2f" | format((count / total_features) * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Statistical Comparisons Card -->
+        {% if stats_results %}
+        <div class="card">
+            <h2>Non-Parametric Statistical Group Comparisons</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Metadata Column</th>
+                            <th>Test Method</th>
+                            <th>Statistic</th>
+                            <th>p-value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_results %}
+                        <tr>
+                            <td><strong>{{ stat.metric }}</strong></td>
+                            <td>{{ stat.column }}</td>
+                            <td>{{ stat.method }}</td>
+                            <td>{{ "%.4f" | format(stat.statistic) }}</td>
+                            <td>
+                                {% if stat.p_value < 0.05 %}
+                                <span class="badge" style="background-color: #27ae60;">{{ "%.4e" | format(stat.p_value) }}</span>
+                                {% else %}
+                                <span class="badge" style="background-color: #7f8c8d;">{{ "%.4f" | format(stat.p_value) }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Data Preview Table -->
+        <div class="card">
+            <h2>Calculated Indices Preview</h2>
+            <div class="table-responsive">
+                {{ indices_table_html }}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const complexesData = {{ complexes_json | safe }};
+        const indicesData = {{ indices_json | safe }};
+
+        // 1. Stacked Bar Chart for Complexes
+        const complexesSpec = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": {"values": complexesData},
+            "mark": "bar",
+            "width": "container",
+            "height": 350,
+            "encoding": {
+                "x": {"field": "sample_id", "type": "nominal", "title": "Sample ID", "sort": null},
+                "y": {"field": "abundance", "type": "quantitative", "title": "Relative Abundance", "stack": "normalize"},
+                "color": {
+                    "field": "complex",
+                    "type": "nominal",
+                    "title": "Ecological Complex",
+                    "scale": {
+                        "domain": ["Red", "Orange", "Extended", "Yellow", "Blue", "Green", "Purple", "Other"],
+                        "range": ["#E41A1C", "#FF7F00", "#984EA3", "#FFFF33", "#377EB8", "#4DAF4A", "#88419D", "#999999"]
+                    }
+                },
+                "tooltip": [
+                    {"field": "sample_id", "title": "Sample"},
+                    {"field": "complex", "title": "Complex"},
+                    {"field": "abundance", "title": "Abundance", "format": ".4f"}
+                ]
+            }
+        };
+
+        // 2. Scatter Plot for pMDI vs SWL
+        const indicesSpec = {
+            "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+            "data": {"values": indicesData},
+            "mark": {"type": "circle", "size": 90},
+            "width": "container",
+            "height": 350,
+            "encoding": {
+                "x": {"field": "pMDI", "type": "quantitative", "title": "pMDI (Periodontal Microbial Dysbiosis Index)"},
+                "y": {"field": "SWL", "type": "quantitative", "title": "SWL (Socransky Weighted Load)"},
+                "color": {"field": "KRS", "type": "quantitative", "title": "Keystone Risk Score (KRS)", "scale": {"scheme": "viridis"}},
+                "tooltip": [
+                    {"field": "sample_id", "title": "Sample"},
+                    {"field": "pMDI", "format": ".3f"},
+                    {"field": "SWL", "format": ".3f"},
+                    {"field": "KRS", "format": ".3f"}
+                ]
+            }
+        };
+
+        vegaEmbed('#complexes-plot', complexesSpec, {actions: false});
+        vegaEmbed('#indices-plot', indicesSpec, {actions: false});
+    </script>
+</body>
+</html>
