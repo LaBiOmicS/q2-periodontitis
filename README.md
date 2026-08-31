@@ -2,6 +2,12 @@
 
 **QIIME 2 Plugin for Subgingival Biofilm Ecological Characterization, Socransky & Extended Complexes Collapse, and Periodontal Dysbiosis Indices**
 
+[![CI](https://github.com/LaBiOmicS/q2-periodontitis/actions/workflows/ci.yml/badge.svg)](https://github.com/LaBiOmicS/q2-periodontitis/actions/workflows/ci.yml)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
+[![QIIME 2](https://img.shields.io/badge/QIIME%202-2024.10%2B-purple.svg)](https://qiime2.org)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org)
+[![Code Style: PEP8](https://img.shields.io/badge/code%20style-PEP%208-orange.svg)](https://peps.python.org/pep-0008/)
+
 ---
 
 ## 📋 Table of Contents
