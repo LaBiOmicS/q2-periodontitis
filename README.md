@@ -141,28 +141,35 @@ $$\Delta KRS_i = KRS_{i, \text{Target}} - KRS_{i, \text{Baseline}}$$
 ## 5. Installation
 
 ### Prerequisites
-- Conda / Mamba environment with **QIIME 2** installed (e.g., `qiime2-amplicon-2024.10` or compatible).
+- An active **QIIME 2** environment (e.g., QIIME 2 2024.10 or compatible).
 
-### Step-by-Step Installation
+### Direct Installation from GitHub
 
-1. Activate your QIIME 2 environment:
+In your active QIIME 2 environment, install directly from source:
+
 ```bash
-conda activate qiime2-amplicon-2024.10
+pip install git+https://github.com/fabianomenegidio/q2-periodontitis.git
 ```
 
-2. Clone the repository and install in editable mode:
+### Installation for Local Development
+
+Alternatively, clone the repository and install in editable mode:
+
 ```bash
 git clone https://github.com/fabianomenegidio/q2-periodontitis.git
 cd q2-periodontitis
 pip install -e .
 ```
 
-3. Refresh QIIME 2 CLI cache:
+### Refresh QIIME 2 Plugin Cache
+
+After installation, update the QIIME 2 command-line interface cache:
+
 ```bash
 qiime dev refresh-cache
 ```
 
-4. Verify installation:
+Verify installation:
 ```bash
 qiime periodontitis --help
 ```
