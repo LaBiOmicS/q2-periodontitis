@@ -9,15 +9,15 @@
 2. [Key Features](#2-key-features)
 3. [Ecological Complexes Table (Socransky & Extended)](#3-ecological-complexes-table-socransky--extended)
 4. [Mathematical Formulation of Indices](#4-mathematical-formulation-of-indices)
-   - [Periodontal Microbial Dysbiosis Index ($pMDI$ & $pMDI_{\text{clr}}$)](#41-periodontal-microbial-dysbiosis-index-pmdi--pmdi_textclr)
-   - [Socransky Weighted Load ($SWL$)](#42-socransky-weighted-load-swl)
-   - [Keystone Risk Score ($KRS$)](#43-keystone-risk-score-krs)
-   - [Longitudinal Treatment Deltas ($\Delta$-Indices)](#44-longitudinal-treatment-deltas-delta-indices)
+   - [Periodontal Microbial Dysbiosis Index (pMDI & pMDI_clr)](#41-periodontal-microbial-dysbiosis-index-pmdi--pmdi_clr)
+   - [Socransky Weighted Load (SWL)](#42-socransky-weighted-load-swl)
+   - [Keystone Risk Score (KRS)](#43-keystone-risk-score-krs)
+   - [Longitudinal Treatment Deltas (Delta-Indices)](#44-longitudinal-treatment-deltas-delta-indices)
 5. [Installation](#5-installation)
 6. [Usage Guide & CLI Reference](#6-usage-guide--cli-reference)
-   - [1. `collapse-complexes`](#1-collapse-complexes)
-   - [2. `delta-indices`](#2-delta-indices)
-   - [3. `summarize`](#3-summarize)
+   - [1. collapse-complexes](#1-collapse-complexes)
+   - [2. delta-indices](#2-delta-indices)
+   - [3. summarize](#3-summarize)
 7. [QIIME 2 Semantic Types & Directory Formats](#7-qiime-2-semantic-types--directory-formats)
 8. [Integration with Downstream Pipelines](#8-integration-with-downstream-pipelines)
 9. [Citations & License](#9-citations--license)
@@ -47,11 +47,11 @@ In standard amplicon (16S rRNA) or shotgun metagenomic workflows within QIIME 2,
   - `genus-majority` *(Recommended)*: Resolves at the genus level (`g__`) for conserved oral taxa.
   - `probabilistic`: Proportionally weights feature abundance based on reference database species distributions.
 - 📐 **Multidimensional Dysbiosis Metrics:**
-  - **$pMDI$:** Log-ratio of dysbiotic versus eubiotic complexes (with adaptive pseudocount and Compositional Data Analysis CLR support).
-  - **$SWL$:** Load weighted by virulency and proteolytic potential.
-  - **$KRS$:** Sigmoidal risk score penalizing the presence of low-abundance keystone pathogens.
-  - **$\Delta$-Indices:** Longitudinal treatment monitoring (Pre- vs. Post-treatment / follow-up).
-- 📊 **Interactive `.qzv` Visualizations:** Dashboards equipped with Vega-Lite charts (stacked bar charts, index boxplots) and automated non-parametric statistics (Kruskal-Wallis and Mann-Whitney U tests with $p$-values).
+  - **pMDI:** Log-ratio of dysbiotic versus eubiotic complexes (with adaptive pseudocount and Compositional Data Analysis CLR support).
+  - **SWL:** Load weighted by virulency and proteolytic potential.
+  - **KRS:** Sigmoidal risk score penalizing the presence of low-abundance keystone pathogens.
+  - **Delta-Indices:** Longitudinal treatment monitoring (Pre- vs. Post-treatment / follow-up).
+- 📊 **Interactive `.qzv` Visualizations:** Dashboards equipped with Vega-Lite charts (stacked bar charts, index boxplots) and automated non-parametric statistics (Kruskal-Wallis and Mann-Whitney U tests with *p*-values).
 - 🔄 **QIIME 2 Ecosystem Native:** Directly outputs registered semantic types, enabling seamless chaining into `q2-diversity`, `q2-sample-classifier`, and `q2-longitudinal`.
 
 ---
@@ -73,34 +73,37 @@ In standard amplicon (16S rRNA) or shotgun metagenomic workflows within QIIME 2,
 
 ## 4. Mathematical Formulation of Indices
 
-Given a relative abundance matrix $\mathbf{P} \in [0, 1]^{N \times M}$ across $N$ samples and $M$ features, and a binary projection matrix $\mathbf{W} \in \{0, 1\}^{M \times K}$, the collapsed complex matrix $\mathbf{Y} \in [0, 1]^{N \times K}$ is calculated as:
+Given a relative abundance matrix **P** of *N* samples and *M* features, and a binary projection matrix **W** of *M* features and *K* complexes, the collapsed complex relative abundance matrix **Y** is calculated as:
+
 $$\mathbf{Y} = \mathbf{P} \mathbf{W}$$
 
-### 4.1. Periodontal Microbial Dysbiosis Index ($pMDI$ & $pMDI_{\text{clr}}$)
+### 4.1. Periodontal Microbial Dysbiosis Index (pMDI & pMDI_clr)
 
-The $pMDI$ computes the log-ratio between dysbiotic/pathogenic complexes ($\mathcal{D} = \{\text{Red}, \text{Orange}, \text{Extended}\}$) and eubiotic/commensal complexes ($\mathcal{H} = \{\text{Yellow}, \text{Blue}\}$):
+The **pMDI** computes the log10-ratio between dysbiotic/pathogenic complexes ($\mathcal{D} = \{\text{Red}, \text{Orange}, \text{Extended}\}$) and eubiotic/commensal complexes ($\mathcal{H} = \{\text{Yellow}, \text{Blue}\}$):
 
 $$pMDI_i = \log_{10} \left( \frac{\sum_{c \in \mathcal{D}} y_{i, c} + \epsilon_i}{\sum_{c \in \mathcal{H}} y_{i, c} + \epsilon_i} \right)$$
 
 Where $\epsilon_i$ is a sample-wise dynamic adaptive pseudocount:
+
 $$\epsilon_i = \begin{cases} \frac{\min(y_{i, c} > 0)}{2}, & \text{if } \exists \, y_{i, c} > 0 \\ 10^{-5}, & \text{otherwise} \end{cases}$$
 
-#### Compositional Variant ($pMDI_{\text{clr}}$)
+#### Compositional Variant (pMDI_clr)
 For robust analysis under Compositional Data Analysis (CoDA) principles:
+
 $$pMDI_{\text{clr}, i} = \text{clr}(y_{i, \mathcal{D}}) - \text{clr}(y_{i, \mathcal{H}})$$
 
 - **Interpretation:**
-  - $pMDI > 0$: Severe dysbiotic state (high pathogen burden).
-  - $pMDI \approx 0$: Transitional biofilm / mild inflammatory state.
-  - $pMDI < 0$: Periodontal homeostasis (commensal dominance).
+  - `pMDI > 0`: Severe dysbiotic state (high pathogen burden).
+  - `pMDI ~ 0`: Transitional biofilm / mild inflammatory state.
+  - `pMDI < 0`: Periodontal homeostasis (commensal dominance).
 
 ---
 
-### 4.2. Socransky Weighted Load ($SWL$)
+### 4.2. Socransky Weighted Load (SWL)
 
-The $SWL$ calculates pathogenic burden weighted by proteolytic and virulence potential:
+The **SWL** calculates pathogenic burden weighted by proteolytic and virulence potential:
 
-$$SWL_i = \sum_{c \in \mathcal{K}} \omega_c \cdot y_{i, c}, \quad SWL_i \in [0, 1]$$
+$$SWL_i = \sum_{c \in \mathcal{K}} \omega_c \cdot y_{i, c}$$
 
 Empirical Virulence Weights ($\vec{\omega}$):
 - $\omega_{\text{Red}} = 1.00$
@@ -114,9 +117,9 @@ Empirical Virulence Weights ($\vec{\omega}$):
 
 ---
 
-### 4.3. Keystone Risk Score ($KRS$)
+### 4.3. Keystone Risk Score (KRS)
 
-Based on the *Keystone-Pathogen Hypothesis*, $KRS$ applies a sigmoidal penalty when Red complex pathogen abundance surpasses the critical threshold $\theta_{\text{Red}} = 0.005$ (0.5%):
+Based on the *Keystone-Pathogen Hypothesis*, **KRS** applies a sigmoidal penalty when Red complex pathogen abundance surpasses the critical threshold $\theta_{\text{Red}} = 0.005$ (0.5%):
 
 $$KRS_i = \left( 1 + \tanh\left( \alpha \cdot \frac{y_{i, \text{Red}}}{\theta_{\text{Red}}} \right) \right) \cdot \left( y_{i, \text{Red}} + y_{i, \text{Extended}} + 0.5 \cdot y_{i, \text{Orange}} \right)$$
 
@@ -124,17 +127,19 @@ Where $\alpha$ controls sigmoidal steepness (default: $\alpha = 1.0$).
 
 ---
 
-### 4.4. Longitudinal Treatment Deltas ($\Delta$-Indices)
+### 4.4. Longitudinal Treatment Deltas (Delta-Indices)
 
 Allows comparison of paired samples from subjects undergoing periodontal therapy (e.g., Scaling and Root Planing - SRP, adjunctive antibiotics, or phototherapy):
 
 $$\Delta pMDI_i = pMDI_{i, \text{Target}} - pMDI_{i, \text{Baseline}}$$
+
 $$\Delta SWL_i = SWL_{i, \text{Target}} - SWL_{i, \text{Baseline}}$$
+
 $$\Delta KRS_i = KRS_{i, \text{Target}} - KRS_{i, \text{Baseline}}$$
 
 - **Clinical Interpretation:**
-  - $\Delta < 0$: Favorable therapeutic response (reduction in dysbiosis and eubiotic biofilm recovery).
-  - $\Delta \ge 0$: Treatment failure, recalcitrance, or disease recurrence.
+  - `Delta < 0`: Favorable therapeutic response (reduction in dysbiosis and eubiotic biofilm recovery).
+  - `Delta >= 0`: Treatment failure, recalcitrance, or disease recurrence.
 
 ---
 
@@ -205,7 +210,7 @@ qiime periodontitis collapse-complexes \
 
 #### Outputs
 - `--o-complex-table` (`SampleData[SocranskyComplexes]`): Relative abundance matrix of collapsed ecological complexes.
-- `--o-indices` (`SampleData[PeriodontalIndices]`): Calculated dysbiosis metrics ($pMDI$, $pMDI_{\text{clr}}$, $SWL$, $KRS$).
+- `--o-indices` (`SampleData[PeriodontalIndices]`): Calculated dysbiosis metrics (pMDI, pMDI_clr, SWL, KRS).
 - `--o-mapping` (`FeatureData[SocranskyMapping]`): Audit table mapping each feature ID to its assigned complex.
 
 ---
@@ -258,11 +263,11 @@ qiime tools view periodontitis-report.qzv
 `q2-periodontitis` registers three dedicated **Semantic Types** within the QIIME 2 framework:
 
 1. **`SampleData[SocranskyComplexes]`**
-   - **Description:** Relative abundance matrix ($N \times K$) containing proportions across all 8 ecological complexes per sample.
+   - **Description:** Relative abundance matrix (*N* x *K*) containing proportions across all 8 ecological complexes per sample.
    - **Directory Format:** `SocranskyComplexesDirectoryFormat` (`matrix.tsv`).
 
 2. **`SampleData[PeriodontalIndices]`**
-   - **Description:** Quantitative table containing calculated metrics ($pMDI$, $pMDI_{\text{clr}}$, $SWL$, $KRS$) for each sample.
+   - **Description:** Quantitative table containing calculated metrics (pMDI, pMDI_clr, SWL, KRS) for each sample.
    - **Directory Format:** `PeriodontalIndicesDirectoryFormat` (`indices.tsv`).
 
 3. **`FeatureData[SocranskyMapping]`**
@@ -275,7 +280,7 @@ qiime tools view periodontitis-report.qzv
 
 Artifacts produced by `q2-periodontitis` connect seamlessly into standard QIIME 2 plugins:
 
-### Ordination and $\beta$-Diversity (`q2-diversity`)
+### Ordination and Beta Diversity (`q2-diversity`)
 Perform PCoA or UMAP ordination on collapsed complex matrices to visualize community trajectories:
 ```bash
 qiime diversity pcoa \
