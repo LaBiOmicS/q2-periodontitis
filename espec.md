@@ -158,4 +158,4 @@ q2-periodontitis/
 ---
 
 ## 5. Citations & License
-Licensed under [BSD-3-Clause License](file:///home/fabiano.menegidio/workdir/TI/bioinformatics/q2-plugins/q2-periodontitis/LICENSE).
+Licensed under [MIT License](file:///home/fabiano.menegidio/workdir/TI/bioinformatics/q2-plugins/q2-periodontitis/LICENSE).

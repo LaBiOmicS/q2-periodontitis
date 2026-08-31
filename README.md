@@ -3,7 +3,7 @@
 **QIIME 2 Plugin for Subgingival Biofilm Ecological Characterization, Socransky & Extended Complexes Collapse, and Periodontal Dysbiosis Indices**
 
 [![CI](https://github.com/LaBiOmicS/q2-periodontitis/actions/workflows/ci.yml/badge.svg)](https://github.com/LaBiOmicS/q2-periodontitis/actions/workflows/ci.yml)
-[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![QIIME 2](https://img.shields.io/badge/QIIME%202-2024.10%2B-purple.svg)](https://qiime2.org)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org)
 [![Code Style: PEP8](https://img.shields.io/badge/code%20style-PEP%208-orange.svg)](https://peps.python.org/pep-0008/)
@@ -331,4 +331,4 @@ If you use `q2-periodontitis` in your research, please cite:
    > Curtis, M. A., Diaz, P. I., & Van Dyke, T. E. (2020). Biomarkers of periodontal disease status and progression. *Periodontology 2000*, 84(1), 11-25.
 
 ### License
-This project is licensed under the [BSD-3-Clause License](file:///home/fabiano.menegidio/workdir/TI/bioinformatics/q2-plugins/q2-periodontitis/LICENSE).
+This project is licensed under the [MIT License](file:///home/fabiano.menegidio/workdir/TI/bioinformatics/q2-plugins/q2-periodontitis/LICENSE).

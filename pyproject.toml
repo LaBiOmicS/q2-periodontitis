@@ -7,14 +7,14 @@ name = "q2-periodontitis"
 version = "2026.1.0"
 description = "QIIME 2 plugin for subgingival biofilm ecological characterization, Socransky complexes collapse, and dysbiosis indices."
 readme = "README.md"
-license = { text = "BSD-3-Clause" }
+license = { text = "MIT" }
 authors = [
     { name = "Fabiano Menegidio", email = "fabiano.menegidio@example.com" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
