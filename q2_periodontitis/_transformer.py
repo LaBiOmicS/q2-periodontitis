@@ -17,7 +17,7 @@ def _1(format: SocranskyComplexesFormat) -> pd.DataFrame:
 def _2(df: pd.DataFrame) -> SocranskyComplexesFormat:
     format = SocranskyComplexesFormat()
     with format.open() as fh:
-        df.to_csv(fh, sep='\t', index=label=True)
+        df.to_csv(fh, sep='\t', index_label='sample-id')
     return format
 
 @plugin.register_transformer
@@ -44,7 +44,20 @@ def _6(df: pd.DataFrame) -> SocranskyMappingFormat:
         df.to_csv(fh, sep='\t', index_label='Feature ID')
     return format
 
+import qiime2
+
 @plugin.register_transformer
-def _7(df: pd.DataFrame) -> biom.Table:
-    # Convert dataframe (samples x complexes) to biom Table
-    return biom.Table(df.values.T, observation_ids=list(df.columns), sample_ids=list(df.index))
+def _8(format: PeriodontalIndicesFormat) -> qiime2.Metadata:
+    with format.open() as fh:
+        return qiime2.Metadata(pd.read_csv(fh, sep='\t', index_col=0))
+
+@plugin.register_transformer
+def _9(format: SocranskyComplexesFormat) -> qiime2.Metadata:
+    with format.open() as fh:
+        return qiime2.Metadata(pd.read_csv(fh, sep='\t', index_col=0))
+
+@plugin.register_transformer
+def _10(format: SocranskyMappingFormat) -> qiime2.Metadata:
+    with format.open() as fh:
+        return qiime2.Metadata(pd.read_csv(fh, sep='\t', index_col=0))
+

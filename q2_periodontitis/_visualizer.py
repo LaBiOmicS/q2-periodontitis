@@ -73,31 +73,34 @@ def summarize(
         merged = indices.join(meta_df, how="inner")
 
         for col in meta_df.columns:
-            # Check categorical columns
-            groups = [group.dropna() for _, group in merged.groupby(col)]
-            non_empty_groups = [g for g in groups if len(g) >= 2]
+            # Check categorical columns (between 2 and 20 unique values)
+            valid_merged = merged.dropna(subset=[col])
+            n_unique = valid_merged[col].nunique()
+            if 2 <= n_unique <= 20:
+                groups_dict = {k: v for k, v in valid_merged.groupby(col) if len(v) >= 2}
+                if len(groups_dict) >= 2:
+                    for metric in ["pMDI", "pMDI_clr", "pMDI_ilr", "SWL", "KRS"]:
+                        group_data = [g[metric].dropna().values for g in groups_dict.values()]
+                        group_data = [d for d in group_data if len(d) >= 2]
+                        if len(group_data) >= 2:
+                            try:
+                                if len(group_data) == 2:
+                                    stat, pval = mannwhitneyu(group_data[0], group_data[1])
+                                    method = "Mann-Whitney U"
+                                else:
+                                    stat, pval = kruskal(*group_data)
+                                    method = "Kruskal-Wallis"
 
-            if len(non_empty_groups) >= 2:
-                for metric in ["pMDI", "pMDI_clr", "pMDI_ilr", "SWL", "KRS"]:
-                    group_data = [g[metric].values for g in non_empty_groups if len(g[metric].values) > 0]
-                    if len(group_data) >= 2:
-                        try:
-                            if len(group_data) == 2:
-                                stat, pval = mannwhitneyu(group_data[0], group_data[1])
-                                method = "Mann-Whitney U"
-                            else:
-                                stat, pval = kruskal(*group_data)
-                                method = "Kruskal-Wallis"
-
-                            stats_results.append({
-                                "metric": metric,
-                                "column": col,
-                                "method": method,
-                                "statistic": float(stat),
-                                "p_value": float(pval)
-                            })
-                        except Exception:
-                            pass
+                                if not np.isnan(pval):
+                                    stats_results.append({
+                                        "metric": metric,
+                                        "column": col,
+                                        "method": method,
+                                        "statistic": float(stat),
+                                        "p_value": float(pval)
+                                    })
+                            except Exception:
+                                pass
 
     # 6. Render Jinja2 template
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(ASSET_DIR))

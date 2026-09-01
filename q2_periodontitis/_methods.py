@@ -130,7 +130,7 @@ def assign_feature_to_complex(tax_str, tax_map, synonyms, assignment_mode="genus
 
 def collapse_complexes(
     table: biom.Table,
-    taxonomy: object,
+    taxonomy: pd.Series,
     assignment_mode: str = "genus-majority",
     custom_mapping: pd.DataFrame = None,
     keystone_threshold: float = 0.005,

@@ -144,3 +144,5 @@ plugin.visualizers.register_function(
     name='Summarize Periodontal Complexes & Dysbiosis Metrics',
     description='Generates interactive visualization dashboard (.qzv) with statistical group comparisons.'
 )
+
+import q2_periodontitis._transformer
