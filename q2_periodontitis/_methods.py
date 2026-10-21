@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 import pandas as pd
 import biom
@@ -58,9 +59,53 @@ def load_default_mappings():
     return tax_map, synonyms
 
 
+RANK_PREFIX_RE = re.compile(r"^[a-z]__")
+
+# Database suffixes appended to genus names or epithets: SILVA
+# (Prevotella_7, Treponema_2) and GTDB / Greengenes2 (Fusobacterium_A,
+# Prevotella_D, nucleatum_D).
+NAME_SUFFIX_RE = re.compile(r"_(\d+|[A-Z]{1,2})$")
+SUFFIX_TOKEN_RE = re.compile(r"\d+|[A-Z]{1,2}")
+# Tokens after which a number is an identifier, not a suffix ("oral taxon 361")
+ID_PREFIX_TOKENS = {"taxon", "hmt", "hot", "ot", "str.", "strain"}
+
+UNINFORMATIVE_PREFIXES = (
+    "uncultured", "unidentified", "unclassified", "unknown", "unassigned",
+    "ambiguous", "metagenome", "environmental", "incertae"
+)
+
+
+def _is_uninformative(name):
+    """True for placeholder labels such as 'uncultured_bacterium',
+    'metagenome', 'unidentified' or 'Ambiguous_taxa'."""
+    lower = name.strip().lower()
+    return (not lower
+            or lower.startswith(UNINFORMATIVE_PREFIXES)
+            or "metagenome" in lower
+            or lower in {"bacterium", "sp", "sp."})
+
+
+def _clean_name(raw):
+    """
+    Normalizes a genus or species label: splits on spaces/underscores and
+    drops database suffix tokens (Prevotella_7 -> Prevotella,
+    Fusobacterium_A nucleatum_D -> Fusobacterium nucleatum).
+    """
+    tokens = [t for t in re.split(r"[\s_]+", raw.strip()) if t]
+    kept = []
+    for tok in tokens:
+        if (kept and SUFFIX_TOKEN_RE.fullmatch(tok)
+                and kept[-1].lower() not in ID_PREFIX_TOKENS):
+            continue
+        kept.append(tok)
+    return " ".join(kept)
+
+
 def parse_taxonomy_string(tax_str, synonyms=None):
     """
-    Parses QIIME 2 / Greengenes / SILVA taxonomy string into (genus, species).
+    Parses QIIME 2 / Greengenes / Greengenes2 / GTDB / SILVA taxonomy strings
+    into (genus, species). Database suffixes (SILVA "_7", GTDB "_A") are
+    removed and placeholder names ("uncultured", "metagenome", ...) ignored.
     Applies synonym cross-walk if available.
     """
     if synonyms is None:
@@ -69,39 +114,38 @@ def parse_taxonomy_string(tax_str, synonyms=None):
     if not isinstance(tax_str, str) or not tax_str.strip():
         return None, None
 
-    # Split by semicolon
     ranks = [r.strip() for r in tax_str.split(";")]
-    genus = None
-    species = None
+    has_prefixes = any(RANK_PREFIX_RE.match(r) for r in ranks)
+    genus_raw = None
+    species_raw = None
 
-    for r in ranks:
-        clean_r = r
-        # Remove rank prefixes like d__, k__, p__, c__, o__, f__, g__, s__
-        for prefix in ["d__", "k__", "p__", "c__", "o__", "f__", "g__", "s__"]:
-            if clean_r.startswith(prefix):
-                clean_r = clean_r[len(prefix):].strip()
-                break
-
-        if not clean_r or clean_r.lower() in ["unassigned", "uncultured", "ambiguous_taxa"]:
+    for pos, r in enumerate(ranks):
+        clean_r = RANK_PREFIX_RE.sub("", r).strip()
+        if _is_uninformative(clean_r):
             continue
+        if has_prefixes:
+            if r.startswith("g__"):
+                genus_raw = clean_r
+            elif r.startswith("s__"):
+                species_raw = clean_r
+        elif pos == 5:
+            genus_raw = clean_r
+        elif pos == 6:
+            species_raw = clean_r
 
-        if r.startswith("g__") or (genus is None and len(ranks) >= 6 and r == ranks[5]):
-            genus = clean_r
-        elif r.startswith("s__") or (species is None and len(ranks) >= 7 and r == ranks[6]):
-            species = clean_r
+    genus = _clean_name(genus_raw).split(" ")[0] if genus_raw else None
 
-    # If species contains genus (e.g. s__Porphyromonas_gingivalis or s__Porphyromonas gingivalis), format binomial
-    if species:
-        species_clean = species.replace("_", " ")
-        if genus and not species_clean.startswith(genus):
-            species_full = f"{genus} {species_clean}"
-        else:
+    species_full = None
+    if species_raw:
+        species_clean = _clean_name(species_raw)
+        if species_clean[:1].isupper():
+            # Binomial already present (s__Porphyromonas_gingivalis)
             species_full = species_clean
-    else:
-        species_full = None
-
-    if genus:
-        genus = genus.replace("_", " ")
+        elif genus:
+            # Epithet only (Greengenes 13_8: g__Porphyromonas; s__gingivalis)
+            species_full = f"{genus} {species_clean}"
+        if species_full and len(species_full.split(" ")) < 2:
+            species_full = None
 
     # Apply synonym lookup
     if species_full in synonyms:
