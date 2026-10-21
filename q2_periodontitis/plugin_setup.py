@@ -4,6 +4,7 @@ from qiime2.plugin import (
     Str,
     Float,
     Choices,
+    Range,
     Metadata
 )
 from q2_types.feature_table import FeatureTable, Frequency
@@ -63,6 +64,7 @@ plugin.methods.register_function(
     },
     parameters={
         'assignment_mode': Str % Choices(['strict', 'genus-majority', 'probabilistic']),
+        'min_confidence': Float % Range(0, 1, inclusive_end=True),
         'keystone_threshold': Float,
         'keystone_steepness': Float
     },
@@ -78,6 +80,9 @@ plugin.methods.register_function(
     },
     parameter_descriptions={
         'assignment_mode': 'Taxonomic assignment mode for resolving genus-level ambiguities.',
+        'min_confidence': 'Features whose taxonomy Confidence is below this value are assigned to "Other" '
+                          '(Resolution "low-confidence") instead of a complex. Features without a numeric '
+                          'Confidence are never filtered. Default 0.0 (no filtering).',
         'keystone_threshold': 'Critical abundance threshold (theta) for Red complex keystone pathogens (default: 0.005).',
         'keystone_steepness': 'Steepness factor (alpha) for the sigmoidal Keystone Risk Score (default: 1.0).'
     },

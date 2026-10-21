@@ -130,9 +130,10 @@ def assign_feature_to_complex(tax_str, tax_map, synonyms, assignment_mode="genus
 
 def collapse_complexes(
     table: biom.Table,
-    taxonomy: pd.Series,
+    taxonomy: pd.DataFrame,
     assignment_mode: str = "genus-majority",
     custom_mapping: pd.DataFrame = None,
+    min_confidence: float = 0.0,
     keystone_threshold: float = 0.005,
     keystone_steepness: float = 1.0
 ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
@@ -148,22 +149,17 @@ def collapse_complexes(
                 c_name = str(row.iloc[1]).strip()
                 tax_map[t_name] = c_name
 
-    # Handle taxonomy input as pd.DataFrame, pd.Series, or dict
+    # Taxonomy arrives as the q2-types DataFrame (Taxon + optional Confidence)
+    if isinstance(taxonomy, pd.Series):
+        taxonomy = taxonomy.to_frame("Taxon")
+    taxonomy_series = taxonomy["Taxon"] if "Taxon" in taxonomy.columns \
+        else taxonomy.iloc[:, 0]
     confidence_series = None
-    if isinstance(taxonomy, pd.DataFrame):
-        if "Taxon" in taxonomy.columns:
-            taxonomy_series = taxonomy["Taxon"]
-        else:
-            taxonomy_series = taxonomy.iloc[:, 0]
-
-        if "Confidence" in taxonomy.columns:
-            confidence_series = pd.to_numeric(taxonomy["Confidence"], errors="coerce").fillna(1.0)
-    elif isinstance(taxonomy, pd.Series):
-        taxonomy_series = taxonomy
-    elif isinstance(taxonomy, dict):
-        taxonomy_series = pd.Series(taxonomy)
-    else:
-        taxonomy_series = pd.Series(dtype=str)
+    if "Confidence" in taxonomy.columns:
+        # Missing / non-numeric confidences carry no information and are
+        # never filtered out.
+        confidence_series = pd.to_numeric(taxonomy["Confidence"],
+                                          errors="coerce")
 
     sample_ids = list(table.ids(axis="sample"))
     feature_ids = list(table.ids(axis="observation"))
@@ -176,19 +172,26 @@ def collapse_complexes(
     col_sums[col_sums == 0] = 1.0  # Prevent division by zero
     rel_abundance = (matrix / col_sums).T  # (N x M)
 
-    # Map each feature to a complex with optional 16S taxonomy confidence weighting
+    # Map each feature to exactly one complex. Features whose classifier
+    # confidence is below min_confidence are sent to "Other" so that each
+    # sample's complex profile still sums to 1.
     feature_assignments = []
     w_matrix = np.zeros((len(feature_ids), len(COMPLEXES)))
 
     for idx, f_id in enumerate(feature_ids):
         tax_str = str(taxonomy_series.get(f_id, ""))
-        confidence = float(confidence_series.get(f_id, 1.0)) if confidence_series is not None else 1.0
+        confidence = np.nan
+        if confidence_series is not None:
+            confidence = float(confidence_series.get(f_id, np.nan))
 
-        complex_name, resolution = assign_feature_to_complex(
-            tax_str, tax_map, synonyms, assignment_mode
-        )
+        if not np.isnan(confidence) and confidence < min_confidence:
+            complex_name, resolution = "Other", "low-confidence"
+        else:
+            complex_name, resolution = assign_feature_to_complex(
+                tax_str, tax_map, synonyms, assignment_mode
+            )
         c_idx = COMPLEXES.index(complex_name)
-        w_matrix[idx, c_idx] = confidence
+        w_matrix[idx, c_idx] = 1.0
         feature_assignments.append({
             "Feature ID": f_id,
             "Taxonomy": tax_str,
