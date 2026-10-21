@@ -20,9 +20,12 @@ Thank you for your interest in contributing to `q2-periodontitis`! We welcome co
    ```bash
    git checkout -b feature/my-new-feature
    ```
-2. Install the package in editable mode with development dependencies:
+2. Create the official QIIME 2 amplicon 2024.10 environment and install the package in editable mode (see the README, *Installation for Local Development*):
    ```bash
+   conda env update -n q2-amplicon-2024.10 --file environment.yml
+   conda activate q2-amplicon-2024.10
    pip install -e .
+   qiime dev refresh-cache
    ```
 3. Write clean, PEP 8 compliant code and add unit tests under `q2_periodontitis/tests/`.
 4. Run unit tests locally using `pytest`:
@@ -38,3 +41,5 @@ Thank you for your interest in contributing to `q2-periodontitis`! We welcome co
 - Code formatting follows PEP 8 standards.
 - Ensure all public functions have descriptive docstrings.
 - PRs will only be merged if all GitHub Actions CI checks pass.
+- Changes to `q2_periodontitis/data/ehomd_map.tsv` must fill the `source` column with `Socransky1998`, a key from `q2_periodontitis/citations.bib`, or `unverified`.
+- Record user-visible changes in `CHANGELOG.md`.
