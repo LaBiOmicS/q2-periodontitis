@@ -1,74 +1,72 @@
-taxon	complex	level
-Porphyromonas gingivalis	Red	species
-Tannerella forsythia	Red	species
-Treponema denticola	Red	species
-Porphyromonas	Red	genus
-Tannerella	Red	genus
-Fusobacterium nucleatum	Orange	species
-Fusobacterium nucleatum subsp. nucleatum	Orange	species
-Fusobacterium nucleatum subsp. polymorphum	Orange	species
-Fusobacterium nucleatum subsp. vincentii	Orange	species
-Fusobacterium nucleatum subsp. animalis	Orange	species
-Prevotella intermedia	Orange	species
-Prevotella nigrescens	Orange	species
-Parvimonas micra	Orange	species
-Campylobacter rectus	Orange	species
-Campylobacter showae	Orange	species
-Campylobacter gracilis	Orange	species
-Eubacterium nodatum	Orange	species
-Streptococcus constellatus	Orange	species
-Fusobacterium	Orange	genus
-Prevotella	Orange	genus
-Parvimonas	Orange	genus
-Filifactor alocis	Extended	species
-Aggregatibacter actinomycetemcomitans	Extended	species
-Fretibacterium fastidiosum	Extended	species
-Fretibacterium human oral taxon 361	Extended	species
-Treponema maltophilum	Extended	species
-Treponema lecithinolyticum	Extended	species
-Treponema medium	Extended	species
-Selenomonas sputigena	Extended	species
-Desulfobulbus	Extended	genus
-Filifactor	Extended	genus
-Aggregatibacter	Extended	genus
-Fretibacterium	Extended	genus
-Streptococcus gordonii	Yellow	species
-Streptococcus mitis	Yellow	species
-Streptococcus oralis	Yellow	species
-Streptococcus sanguinis	Yellow	species
-Streptococcus intermedius	Yellow	species
-Streptococcus cristatus	Yellow	species
-Streptococcus parasanguinis	Yellow	species
-Streptococcus mutans	Yellow	species
-Streptococcus	Yellow	genus
-Rothia mucilaginosa	Yellow	species
-Rothia dentocariosa	Yellow	species
-Rothia aeria	Yellow	species
-Rothia	Yellow	genus
-Actinomyces naeslundii	Blue	species
-Actinomyces viscosus	Blue	species
-Actinomyces israelii	Blue	species
-Actinomyces gerencseriae	Blue	species
-Actinomyces odontolyticus	Blue	species
-Actinomyces	Blue	genus
-Schaalia odontolytica	Blue	species
-Schaalia	Blue	genus
-Corynebacterium matruchotii	Blue	species
-Corynebacterium	Blue	genus
-Eikenella corrodens	Green	species
-Capnocytophaga gingivalis	Green	species
-Capnocytophaga ochracea	Green	species
-Capnocytophaga sputigena	Green	species
-Capnocytophaga granulosa	Green	species
-Capnocytophaga haemolytica	Green	species
-Campylobacter concisus	Green	species
-Neisseria subflava	Green	species
-Neisseria mucosa	Green	species
-Neisseria	Green	genus
-Capnocytophaga	Green	genus
-Eikenella	Green	genus
-Veillonella parvula	Purple	species
-Veillonella atypica	Purple	species
-Veillonella dispar	Purple	species
-Veillonella rogosae	Purple	species
-Veillonella	Purple	genus
+taxon	complex	level	source
+Porphyromonas gingivalis	Red	species	Socransky1998
+Tannerella forsythia	Red	species	Socransky1998
+Treponema denticola	Red	species	Socransky1998
+Tannerella	Red	genus	unverified
+Fusobacterium nucleatum	Orange	species	Socransky1998
+Fusobacterium nucleatum subsp. nucleatum	Orange	species	Socransky1998
+Fusobacterium nucleatum subsp. polymorphum	Orange	species	Socransky1998
+Fusobacterium nucleatum subsp. vincentii	Orange	species	Socransky1998
+Fusobacterium nucleatum subsp. animalis	Orange	species	unverified
+Prevotella intermedia	Orange	species	Socransky1998
+Prevotella nigrescens	Orange	species	Socransky1998
+Parvimonas micra	Orange	species	Socransky1998
+Campylobacter rectus	Orange	species	Socransky1998
+Campylobacter showae	Orange	species	Socransky1998
+Campylobacter gracilis	Orange	species	Socransky1998
+Eubacterium nodatum	Orange	species	Socransky1998
+Streptococcus constellatus	Orange	species	Socransky1998
+Fusobacterium	Orange	genus	unverified
+Parvimonas	Orange	genus	unverified
+Filifactor alocis	Extended	species	perezchaparro2014newly
+Aggregatibacter actinomycetemcomitans	Extended	species	unverified
+Fretibacterium fastidiosum	Extended	species	perezchaparro2014newly
+Fretibacterium human oral taxon 361	Extended	species	unverified
+Treponema maltophilum	Extended	species	unverified
+Treponema lecithinolyticum	Extended	species	perezchaparro2014newly
+Treponema medium	Extended	species	perezchaparro2014newly
+Selenomonas sputigena	Extended	species	perezchaparro2014newly
+Desulfobulbus	Extended	genus	perezchaparro2014newly
+Filifactor	Extended	genus	unverified
+Aggregatibacter	Extended	genus	unverified
+Fretibacterium	Extended	genus	perezchaparro2014newly
+Streptococcus gordonii	Yellow	species	Socransky1998
+Streptococcus mitis	Yellow	species	Socransky1998
+Streptococcus oralis	Yellow	species	Socransky1998
+Streptococcus sanguinis	Yellow	species	Socransky1998
+Streptococcus intermedius	Yellow	species	Socransky1998
+Streptococcus cristatus	Yellow	species	unverified
+Streptococcus parasanguinis	Yellow	species	unverified
+Streptococcus mutans	Yellow	species	unverified
+Streptococcus	Yellow	genus	unverified
+Rothia mucilaginosa	Yellow	species	unverified
+Rothia dentocariosa	Yellow	species	unverified
+Rothia aeria	Yellow	species	unverified
+Rothia	Yellow	genus	unverified
+Actinomyces naeslundii	Blue	species	socransky2002dental
+Actinomyces viscosus	Blue	species	socransky2002dental
+Actinomyces israelii	Blue	species	socransky2002dental
+Actinomyces gerencseriae	Blue	species	socransky2002dental
+Actinomyces	Blue	genus	unverified
+Schaalia	Blue	genus	unverified
+Corynebacterium matruchotii	Blue	species	unverified
+Corynebacterium	Blue	genus	unverified
+Eikenella corrodens	Green	species	Socransky1998
+Capnocytophaga gingivalis	Green	species	Socransky1998
+Capnocytophaga ochracea	Green	species	Socransky1998
+Capnocytophaga sputigena	Green	species	Socransky1998
+Capnocytophaga granulosa	Green	species	unverified
+Capnocytophaga haemolytica	Green	species	unverified
+Campylobacter concisus	Green	species	Socransky1998
+Neisseria subflava	Green	species	unverified
+Neisseria mucosa	Green	species	unverified
+Neisseria	Green	genus	unverified
+Capnocytophaga	Green	genus	unverified
+Eikenella	Green	genus	unverified
+Actinomyces odontolyticus	Purple	species	Socransky1998
+Schaalia odontolytica	Purple	species	Socransky1998
+Veillonella parvula	Purple	species	Socransky1998
+Veillonella atypica	Purple	species	unverified
+Veillonella dispar	Purple	species	unverified
+Veillonella rogosae	Purple	species	unverified
+Veillonella	Purple	genus	unverified

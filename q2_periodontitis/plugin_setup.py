@@ -129,6 +129,8 @@ plugin.methods.register_function(
         'indices': 'Calculated dysbiosis indices (pMDI, pMDI_ilr, SWL, KRS).',
         'mapping': 'Feature ID to Socransky complex mapping table.'
     },
+    citations=[citations['socransky1998microbial'], citations['socransky2002dental'],
+               citations['perezchaparro2014newly']],
     name='Collapse ASVs into Socransky Complexes & Compute Dysbiosis Indices',
     description='Maps taxonomic strings to Socransky/Extended complexes, collapses feature table, and calculates dysbiosis metrics.'
 )
