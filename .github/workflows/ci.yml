@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, master ]
 
+env:
+  QIIME2_RELEASE: "2024.10"
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -17,21 +20,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: "3.10"
-          channels: conda-forge,bioconda
-          auto-activate-base: true
-
-      - name: Install QIIME 2 and Dependencies
+      - name: Download official QIIME 2 amplicon environment file
         run: |
-          conda install -y -c https://packages.qiime2.org/qiime2/2024.10/amplicon/released/ -c conda-forge -c bioconda qiime2 q2-types q2cli biom-format pandas numpy scipy pytest mock typeguard
+          wget -q -O qiime2-env.yml \
+            "https://data.qiime2.org/distro/amplicon/qiime2-amplicon-${QIIME2_RELEASE}-py310-linux-conda.yml"
+
+      - name: Create QIIME 2 amplicon environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: qiime2-env.yml
+          environment-name: q2-amplicon
+          cache-environment: true
+
+      - name: Add plugin requirements (environment.yml)
+        run: |
+          micromamba env update -n q2-amplicon -f environment.yml -y
 
       - name: Install q2-periodontitis
         run: |
           pip install -e .
+          qiime dev refresh-cache
+          qiime periodontitis --help
 
       - name: Run Pytest
         run: |
           pytest --verbose
+
+      - name: Check wheel contents
+        run: |
+          pip wheel . --no-deps --no-build-isolation -w dist
+          python -m zipfile -l dist/*.whl | tee wheel-contents.txt
+          for f in q2_periodontitis/citations.bib q2_periodontitis/data/ehomd_map.tsv \
+                   q2_periodontitis/assets/web/index.html q2_periodontitis/assets/web/js/vega.min.js \
+                   entry_points.txt; do
+            grep -q "$f" wheel-contents.txt || { echo "missing $f"; exit 1; }
+          done

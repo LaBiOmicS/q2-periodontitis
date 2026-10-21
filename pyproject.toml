@@ -1,15 +1,16 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "q2-periodontitis"
-version = "2026.1.0"
+dynamic = ["version"]
 description = "QIIME 2 plugin for subgingival biofilm ecological characterization, Socransky complexes collapse, and dysbiosis indices."
 readme = "README.md"
 license = { text = "MIT" }
+requires-python = ">=3.10"
 authors = [
-    { name = "Fabiano Menegidio", email = "fabiano.menegidio@example.com" }
+    { name = "Fabiano Menegidio", email = "fmenegidio@gmail.com" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -18,11 +19,34 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Scientific/Engineering :: Bio-Informatics"
 ]
+# qiime2 and q2-types are distributed through the QIIME 2 conda channel,
+# not PyPI; they are declared in environment.yml.
 dependencies = [
     "numpy",
     "pandas",
     "scipy",
     "biom-format",
-    "scikit-bio",
     "jinja2"
+]
+
+[project.urls]
+Homepage = "https://github.com/LaBiOmicS/q2-periodontitis"
+
+[project.entry-points."qiime2.plugins"]
+"q2-periodontitis" = "q2_periodontitis.plugin_setup:plugin"
+
+[tool.setuptools.dynamic]
+version = { attr = "q2_periodontitis._version.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["q2_periodontitis*"]
+
+[tool.setuptools.package-data]
+q2_periodontitis = [
+    "citations.bib",
+    "data/*.tsv",
+    "assets/web/*.html",
+    "assets/web/css/*",
+    "assets/web/js/*",
+    "tests/data/*"
 ]
