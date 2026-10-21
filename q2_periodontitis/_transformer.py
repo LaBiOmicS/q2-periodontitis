@@ -8,6 +8,7 @@ from ._format import (
     PeriodontalIndicesDeltaFormat,
     SocranskyMappingFormat,
     SocranskyReferenceFormat,
+    DysbiosisSignatureFormat,
 )
 
 @plugin.register_transformer
@@ -102,3 +103,20 @@ def _15(format: PeriodontalIndicesDeltaFormat) -> qiime2.Metadata:
     # QIIME 2 Metadata only accepts its own ID header names
     df.index.name = 'id'
     return qiime2.Metadata(df)
+
+
+@plugin.register_transformer
+def _16(format: DysbiosisSignatureFormat) -> pd.DataFrame:
+    with format.open() as fh:
+        df = pd.read_csv(fh, sep='\t', dtype=str, skip_blank_lines=True)
+    df.columns = [c.strip() for c in df.columns]
+    for col in ('taxon', 'direction', 'level'):
+        df[col] = df[col].str.strip()
+    return df
+
+@plugin.register_transformer
+def _17(df: pd.DataFrame) -> DysbiosisSignatureFormat:
+    format = DysbiosisSignatureFormat()
+    with format.open() as fh:
+        df.to_csv(fh, sep='\t', index=False)
+    return format

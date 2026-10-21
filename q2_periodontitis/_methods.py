@@ -1,62 +1,57 @@
 import os
 import re
+import warnings
+
 import numpy as np
 import pandas as pd
+from scipy import sparse
 import biom
 import qiime2
 
+# Socransky et al. (1998) complexes plus the Actinomyces ("Blue") group of
+# Socransky & Haffajee (2002, Fig. 1). "Other" holds every read that is not
+# assigned to a complex.
 COMPLEXES = [
     "Red",
     "Orange",
-    "Extended",
     "Yellow",
-    "Blue",
     "Green",
     "Purple",
+    "Blue",
     "Other"
 ]
 
-WEIGHTS = {
-    "Red": 1.00,
-    "Extended": 0.90,
-    "Orange": 0.60,
-    "Green": 0.20,
-    "Purple": 0.10,
-    "Yellow": 0.00,
-    "Blue": 0.00,
-    "Other": 0.00
-}
+LEVELS = ["species", "genus"]
+DIRECTIONS = ["dysbiotic", "normobiotic"]
 
-ASSIGNMENT_MODES = ["strict", "genus-majority"]
-
-DYSBIOTIC = ["Red", "Orange", "Extended"]
-EUBIOTIC = ["Yellow", "Blue"]
+# Columns of the indices table that describe data quality rather than
+# dysbiosis; they are carried along but never differenced or tested.
+QC_PREFIX = "qc_"
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+COMPLEX_REFERENCE = os.path.join(DATA_DIR, "socransky_complexes.tsv")
+SYNONYMS = os.path.join(DATA_DIR, "synonyms_map.tsv")
+PC2014_REFERENCE = os.path.join(DATA_DIR, "perezchaparro2014_moderate.tsv")
+SMDI_SIMPLIFIED = os.path.join(DATA_DIR, "smdi_simplified_genus.tsv")
+SMDI_SPECIES = os.path.join(DATA_DIR, "smdi_chen2022_species.tsv")
 
 
-def load_default_mappings():
-    """Loads the canonical tax-complex mapping and synonyms table."""
-    ehomd_path = os.path.join(DATA_DIR, "ehomd_map.tsv")
-    syn_path = os.path.join(DATA_DIR, "synonyms_map.tsv")
+def load_complex_reference():
+    """Built-in taxon -> complex reference (columns taxon, complex, level,
+    source, evidence)."""
+    return pd.read_csv(COMPLEX_REFERENCE, sep="\t", dtype=str)
 
-    tax_map = {}
-    if os.path.exists(ehomd_path):
-        df_ehomd = pd.read_csv(ehomd_path, sep="\t")
-        for _, row in df_ehomd.iterrows():
-            taxon = str(row["taxon"]).strip()
-            complex_name = str(row["complex"]).strip()
-            tax_map[taxon] = complex_name
 
-    synonyms = {}
-    if os.path.exists(syn_path):
-        df_syn = pd.read_csv(syn_path, sep="\t")
-        for _, row in df_syn.iterrows():
-            old_name = str(row["old_name"]).strip()
-            canon_name = str(row["canonical_name"]).strip()
-            synonyms[old_name] = canon_name
+def load_synonyms():
+    """Historical name -> current name table, keyed in lower case."""
+    df = pd.read_csv(SYNONYMS, sep="\t", dtype=str)
+    return {old.strip().lower(): new.strip()
+            for old, new in zip(df["old_name"], df["canonical_name"])}
 
-    return tax_map, synonyms
+
+def load_signature(path):
+    """Reads a dysbiosis signature (taxon, direction, level) from a TSV."""
+    return pd.read_csv(path, sep="\t", dtype=str)
 
 
 RANK_PREFIX_RE = re.compile(r"^[a-z]__")
@@ -64,10 +59,15 @@ RANK_PREFIX_RE = re.compile(r"^[a-z]__")
 # Database suffixes appended to genus names or epithets: SILVA
 # (Prevotella_7, Treponema_2) and GTDB / Greengenes2 (Fusobacterium_A,
 # Prevotella_D, nucleatum_D).
-NAME_SUFFIX_RE = re.compile(r"_(\d+|[A-Z]{1,2})$")
 SUFFIX_TOKEN_RE = re.compile(r"\d+|[A-Z]{1,2}")
 # Tokens after which a number is an identifier, not a suffix ("oral taxon 361")
 ID_PREFIX_TOKENS = {"taxon", "hmt", "hot", "ot", "str.", "strain"}
+# Human Microbial Taxon numbers: "HMT 360", "HMT-360", "HOT 360",
+# "oral taxon 360"
+HMT_RE = re.compile(r"(?:\bHMT|\bHOT|oral taxon)[\s_-]*(\d{1,4})\b",
+                    re.IGNORECASE)
+
+CLADE_RE = re.compile(r"[\s_]+clade[\s_]+\d+", re.IGNORECASE)
 
 UNINFORMATIVE_PREFIXES = (
     "uncultured", "unidentified", "unclassified", "unknown", "unassigned",
@@ -87,10 +87,14 @@ def _is_uninformative(name):
 
 def _clean_name(raw):
     """
-    Normalizes a genus or species label: splits on spaces/underscores and
+    Normalizes a genus or species label: splits on spaces/underscores,
     drops database suffix tokens (Prevotella_7 -> Prevotella,
-    Fusobacterium_A nucleatum_D -> Fusobacterium nucleatum).
+    Fusobacterium_A nucleatum_D -> Fusobacterium nucleatum) and the brackets
+    that mark misclassified genera ([Eubacterium] nodatum).
     """
+    # eHOMD 16S clades inside a species ("infantis_clade_431") are not
+    # taxa of their own: drop them.
+    raw = CLADE_RE.sub("", raw)
     tokens = [t for t in re.split(r"[\s_]+", raw.strip()) if t]
     kept = []
     for tok in tokens:
@@ -98,15 +102,44 @@ def _clean_name(raw):
                 and kept[-1].lower() not in ID_PREFIX_TOKENS):
             continue
         kept.append(tok)
-    return " ".join(kept)
+    name = " ".join(kept)
+    # "[Eubacterium] nodatum" -> "Eubacterium nodatum"; "[G-1]" placeholders
+    # inside genus labels are kept, since they are part of the eHOMD name.
+    return re.sub(r"^\[([A-Za-z]+)\]", r"\1", name)
+
+
+def hmt_number(name):
+    """Human Microbial Taxon number in a label, as an int, or None."""
+    if not name:
+        return None
+    match = HMT_RE.search(name)
+    return int(match.group(1)) if match else None
+
+
+def taxon_key(name):
+    """Matching key of a taxon name: "hmt N" for Human Microbial Taxon
+    phylotypes (so "Fretibacterium sp. oral taxon 360" and "Fretibacterium
+    sp. HMT 360" match, whatever placeholder genus a database version
+    uses), the lower-case name otherwise."""
+    number = hmt_number(name)
+    return "hmt %d" % number if number is not None else name.lower()
+
+
+def _canonical(name, synonyms):
+    if name is None:
+        return None
+    return synonyms.get(name.lower(), name)
 
 
 def parse_taxonomy_string(tax_str, synonyms=None):
     """
-    Parses QIIME 2 / Greengenes / Greengenes2 / GTDB / SILVA taxonomy strings
-    into (genus, species). Database suffixes (SILVA "_7", GTDB "_A") are
-    removed and placeholder names ("uncultured", "metagenome", ...) ignored.
-    Applies synonym cross-walk if available.
+    Parses QIIME 2 / eHOMD / Greengenes / Greengenes2 / GTDB / SILVA taxonomy
+    strings into (genus, species). Database suffixes (SILVA "_7", GTDB "_A")
+    are removed, placeholder names ("uncultured", "metagenome", ...) ignored
+    and historical names resolved through `synonyms`.
+
+    Multi-species labels ("Streptococcus mitis/oralis") are returned as a
+    "/"-separated list of binomials; see `species_candidates`.
     """
     if synonyms is None:
         synonyms = {}
@@ -133,7 +166,12 @@ def parse_taxonomy_string(tax_str, synonyms=None):
         elif pos == 6:
             species_raw = clean_r
 
-    genus = _clean_name(genus_raw).split(" ")[0] if genus_raw else None
+    genus = None
+    if genus_raw:
+        tokens = _clean_name(genus_raw).split(" ")
+        # Keep eHOMD placeholder genera whole ("Peptostreptococcaceae [G-6]")
+        keep = 2 if len(tokens) > 1 and tokens[1].startswith("[") else 1
+        genus = _canonical(" ".join(tokens[:keep]), synonyms)
 
     species_full = None
     if species_raw:
@@ -142,199 +180,390 @@ def parse_taxonomy_string(tax_str, synonyms=None):
             # Binomial already present (s__Porphyromonas_gingivalis)
             species_full = species_clean
         elif genus:
-            # Epithet only (Greengenes 13_8: g__Porphyromonas; s__gingivalis)
+            # Epithet only (eHOMD, Greengenes 13_8: g__Porphyromonas;
+            # s__gingivalis)
             species_full = f"{genus} {species_clean}"
         if species_full and len(species_full.split(" ")) < 2:
             species_full = None
 
-    # Apply synonym lookup
-    if species_full in synonyms:
-        species_full = synonyms[species_full]
-    if genus in synonyms:
-        genus = synonyms[genus]
+    if species_full and "/" in species_full:
+        species_full = "/".join(
+            _canonical(s, synonyms) for s in species_candidates(species_full))
+    else:
+        species_full = _canonical(species_full, synonyms)
 
     return genus, species_full
 
 
-def build_lookup(tax_map):
+def species_candidates(species):
+    """Expands "Streptococcus mitis/oralis" into
+    ["Streptococcus mitis", "Streptococcus oralis"]; a single name is
+    returned as a one-element list."""
+    if not species:
+        return []
+    if "/" not in species:
+        return [species]
+    tokens = species.split(" ")
+    genus = tokens[0]
+    rest = " ".join(tokens[1:])
+    candidates = []
+    for part in rest.split("/"):
+        part = part.strip()
+        if not part:
+            continue
+        candidates.append(part if part[:1].isupper() else f"{genus} {part}")
+    return candidates
+
+
+def build_reference(reference_df, synonyms):
     """
-    Validates a taxon -> complex map and returns a case-insensitive lookup
-    (lower-cased taxon -> complex). Raises ValueError on unknown complexes.
+    Validates a taxon -> complex table and returns two case-insensitive
+    lookups: species (and subspecies) names, and genus names. Rows without a
+    `level` column are species when the taxon has two or more words, genus
+    otherwise. Raises ValueError on unknown complexes or levels.
     """
-    invalid = sorted({c for c in tax_map.values() if c not in COMPLEXES})
+    df = reference_df.copy()
+    missing = [c for c in ("taxon", "complex") if c not in df.columns]
+    if missing:
+        raise ValueError(
+            "The reference must have the columns 'taxon' and 'complex'; "
+            "missing: %s." % ", ".join(missing))
+    df["taxon"] = df["taxon"].astype(str).str.strip()
+    df["complex"] = df["complex"].astype(str).str.strip()
+    if "level" not in df.columns or df["level"].isna().all():
+        df["level"] = np.where(df["taxon"].str.contains(" "),
+                               "species", "genus")
+    df["level"] = df["level"].fillna("").astype(str).str.strip()
+    blank = df["level"] == ""
+    df.loc[blank, "level"] = np.where(
+        df.loc[blank, "taxon"].str.contains(" "), "species", "genus")
+
+    invalid = sorted(set(df["complex"]) - set(COMPLEXES))
     if invalid:
-        offenders = sorted(t for t, c in tax_map.items() if c in invalid)
+        offenders = sorted(df.loc[df["complex"].isin(invalid), "taxon"])
         raise ValueError(
             "Invalid complex name(s) %s (taxa: %s). Valid complexes are: %s."
             % (", ".join(repr(c) for c in invalid),
-               ", ".join(offenders[:10]) + (" ..." if len(offenders) > 10 else ""),
-               ", ".join(COMPLEXES))
-        )
-    return {k.lower(): v for k, v in tax_map.items()}
+               ", ".join(offenders[:10])
+               + (" ..." if len(offenders) > 10 else ""),
+               ", ".join(COMPLEXES)))
+    bad_levels = sorted(set(df["level"]) - set(LEVELS))
+    if bad_levels:
+        raise ValueError("Invalid level(s) %s; use 'species' or 'genus'."
+                         % ", ".join(repr(v) for v in bad_levels))
+
+    species, genera = {}, {}
+    for taxon, complex_name, level in zip(df["taxon"], df["complex"],
+                                          df["level"]):
+        name = _canonical(taxon, synonyms)
+        target = species if level == "species" else genera
+        target[name.lower()] = complex_name
+    return species, genera
 
 
-def assign_feature_to_complex(tax_str, lookup, synonyms, assignment_mode="genus-majority"):
+def merge_references(base_df, custom_df):
+    """Custom entries are added to, and override, the built-in ones."""
+    if custom_df is None or custom_df.empty:
+        return base_df
+    missing = [c for c in ("taxon", "complex") if c not in custom_df.columns]
+    if missing:
+        raise ValueError(
+            "custom_mapping must have the columns 'taxon' and 'complex'; "
+            "missing: %s." % ", ".join(missing))
+    custom = custom_df.copy()
+    custom["taxon"] = custom["taxon"].astype(str).str.strip()
+    keep = ~base_df["taxon"].str.lower().isin(custom["taxon"].str.lower())
+    return pd.concat([base_df[keep], custom], ignore_index=True, sort=False)
+
+
+def assign_feature_to_complex(tax_str, species_lookup, genus_lookup,
+                              synonyms):
     """
-    Assigns a single taxonomic string to a Socransky / Extended complex.
-    `lookup` is the case-insensitive map returned by build_lookup().
+    Assigns one taxonomic string to a complex. Returns (complex, resolution)
+    with resolution one of:
 
-    assignment_mode:
-      - "strict": species-level match only;
-      - "genus-majority": uses the species when available; otherwise, the
-        genus-level mapping.
+    - "species": the species (or subspecies) is listed in the reference;
+    - "genus": the species is unknown or unlisted, and the genus itself is
+      listed as a whole (only genera with an explicit genus-level entry);
+    - "ambiguous": a multi-species label whose candidates fall in different
+      complexes (or only some of them are listed);
+    - "unassigned": nothing matched.
     """
-    if assignment_mode not in ASSIGNMENT_MODES:
-        raise ValueError("assignment_mode must be one of %s, got %r."
-                         % (", ".join(ASSIGNMENT_MODES), assignment_mode))
     genus, species = parse_taxonomy_string(tax_str, synonyms)
 
-    # 1. Species level match
-    if species and species.lower() in lookup:
-        return lookup[species.lower()], "species"
+    candidates = species_candidates(species)
+    if len(candidates) > 1:
+        hits = {species_lookup.get(c.lower()) for c in candidates}
+        if len(hits) == 1 and None not in hits:
+            return hits.pop(), "species"
+        if hits != {None}:
+            return "Other", "ambiguous"
+    elif species and species.lower() in species_lookup:
+        return species_lookup[species.lower()], "species"
 
-    # 2. Genus level match (genus-majority only)
-    if assignment_mode == "genus-majority":
-        if genus and genus.lower() in lookup:
-            return lookup[genus.lower()], "genus"
+    if genus and genus.lower() in genus_lookup:
+        return genus_lookup[genus.lower()], "genus"
 
     return "Other", "unassigned"
+
+
+def _signature_lookup(path=PC2014_REFERENCE, synonyms=None):
+    """Names (lower case) and HMT numbers of the Pérez-Chaparro et al. (2014)
+    moderate-evidence taxa."""
+    synonyms = synonyms or {}
+    df = pd.read_csv(path, sep="\t", dtype=str)
+    names = {_canonical(t.strip(), synonyms).lower() for t in df["taxon"]}
+    hmts = {int(h) for h in df["hmt"].dropna()}
+    return names, hmts
+
+
+def is_pc2014_taxon(species, names, hmts):
+    """True when the parsed species (a single, non-ambiguous name) is one of
+    the moderate-evidence taxa, matched by name or by HMT number."""
+    if not species or "/" in species:
+        return False
+    if species.lower() in names:
+        return True
+    number = hmt_number(species)
+    return number is not None and number in hmts
+
+
+def _confidence_series(taxonomy):
+    if "Confidence" not in taxonomy.columns:
+        return None
+    # Missing / non-numeric confidences carry no information and are never
+    # filtered out.
+    return pd.to_numeric(taxonomy["Confidence"], errors="coerce")
+
+
+def _taxon_series(taxonomy):
+    if isinstance(taxonomy, pd.Series):
+        return taxonomy
+    if "Taxon" in taxonomy.columns:
+        return taxonomy["Taxon"]
+    return taxonomy.iloc[:, 0]
+
+
+def validate_signature(signature):
+    """Checks a dysbiosis signature table and returns it normalized."""
+    missing = [c for c in ("taxon", "direction", "level")
+               if c not in signature.columns]
+    if missing:
+        raise ValueError("The signature must have the columns 'taxon', "
+                         "'direction' and 'level'; missing: %s."
+                         % ", ".join(missing))
+    sig = signature.copy()
+    for col in ("taxon", "direction", "level"):
+        sig[col] = sig[col].astype(str).str.strip()
+    sig["direction"] = sig["direction"].str.lower()
+    sig["level"] = sig["level"].str.lower()
+    bad = sorted(set(sig["direction"]) - set(DIRECTIONS))
+    if bad:
+        raise ValueError("Invalid direction(s) %s; use 'dysbiotic' or "
+                         "'normobiotic'." % ", ".join(repr(b) for b in bad))
+    levels = set(sig["level"])
+    if len(levels) != 1 or not levels <= set(LEVELS):
+        raise ValueError("All signature rows must share one level, "
+                         "'species' or 'genus' (found: %s)."
+                         % ", ".join(sorted(levels)))
+    for direction in DIRECTIONS:
+        if not (sig["direction"] == direction).any():
+            raise ValueError("The signature needs at least one %s taxon."
+                             % direction)
+    if sig["taxon"].map(taxon_key).duplicated().any():
+        raise ValueError("The signature lists a taxon more than once.")
+    return sig
+
+
+def aggregate_counts(table, taxonomy, synonyms, level):
+    """
+    Sums the feature counts by species or genus name (samples x taxa).
+    Features without a name at that level are kept as their own units, keyed
+    by their full taxonomy string, so that the total of every sample is
+    unchanged.
+    """
+    taxa = _taxon_series(taxonomy)
+    feature_ids = list(table.ids(axis="observation"))
+    units = []
+    for f_id in feature_ids:
+        tax_str = taxa.get(f_id, "")
+        genus, species = parse_taxonomy_string(tax_str, synonyms)
+        name = species if level == "species" else genus
+        if name and "/" not in name:
+            units.append(taxon_key(name) if level == "species"
+                         else name.lower())
+        else:
+            units.append("unresolved: %s" % tax_str)
+    codes, uniques = pd.factorize(pd.Series(units))
+    indicator = sparse.csr_matrix(
+        (np.ones(len(codes)), (codes, np.arange(len(codes)))),
+        shape=(len(uniques), len(codes)))
+    summed = indicator @ table.matrix_data  # taxa x samples, still sparse
+    return pd.DataFrame(summed.toarray().T,
+                        index=list(table.ids(axis="sample")),
+                        columns=list(uniques))
+
+
+def clr_microbiome(counts):
+    """
+    Centered log-ratio transform as implemented by the R package microbiome
+    (v1.6.0, transform(x, "clr")), the implementation used to define the
+    SMDI: counts are closed to relative abundances, a single pseudocount
+    equal to half the smallest non-zero relative abundance of the whole
+    table is added to every entry, and each sample is centred on the mean
+    of its natural logs.
+    """
+    depth = counts.sum(axis=1)
+    rel = counts.div(depth.where(depth > 0), axis=0)
+    values = rel.to_numpy(dtype=float)
+    finite = values[np.isfinite(values)]
+    if (finite == 0).any():
+        values = values + finite[finite > 0].min() / 2.0
+    logs = np.log(values)
+    clr = logs - logs.mean(axis=1, keepdims=True)
+    return pd.DataFrame(clr, index=counts.index, columns=counts.columns)
+
+
+def compute_smdi(table, taxonomy, signature, synonyms):
+    """
+    Subgingival Microbial Dysbiosis Index (Chen, Marsh & Al-Hebshi 2022):
+    the mean CLR abundance of the dysbiotic taxa minus the mean CLR abundance
+    of the normobiotic taxa. The CLR is taken over every taxon of the table
+    at the signature's level. Signature taxa absent from the whole table are
+    added as all-zero columns (that is, they receive the pseudocount), as
+    they would be in a table merged with samples that contain them; a
+    warning lists them.
+
+    Returns (smdi, missing_taxa). Samples without reads get NaN.
+    """
+    sig = validate_signature(signature)
+    level = sig["level"].iloc[0]
+    counts = aggregate_counts(table, taxonomy, synonyms, level)
+
+    if level == "species":
+        names = [taxon_key(_canonical(t, synonyms)) for t in sig["taxon"]]
+    else:
+        names = [_canonical(t, synonyms).lower() for t in sig["taxon"]]
+    missing = [n for n in names if n not in counts.columns]
+    for name in missing:
+        counts[name] = 0.0
+
+    clr = clr_microbiome(counts)
+    dysbiotic = [n for n, d in zip(names, sig["direction"])
+                 if d == "dysbiotic"]
+    normobiotic = [n for n, d in zip(names, sig["direction"])
+                   if d == "normobiotic"]
+    smdi = clr[dysbiotic].mean(axis=1) - clr[normobiotic].mean(axis=1)
+    smdi[counts.sum(axis=1) == 0] = np.nan
+    return smdi, missing
 
 
 def collapse_complexes(
     table: biom.Table,
     taxonomy: pd.DataFrame,
-    assignment_mode: str = "genus-majority",
     custom_mapping: pd.DataFrame = None,
-    min_confidence: float = 0.0,
-    pseudocount: float = 1e-5,
-    keystone_threshold: float = 0.005,
-    keystone_steepness: float = 1.0
+    smdi_signature: pd.DataFrame = None,
+    min_confidence: float = 0.0
 ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
-    Collapses ASV/OTU feature table into Socransky complexes and computes dysbiosis metrics.
+    Collapses a feature table into Socransky complexes and computes the SMDI
+    (see compute_smdi), PC2014_moderate and the quality-control columns.
     """
     if not 0.0 <= min_confidence <= 1.0:
         raise ValueError("min_confidence must be within [0, 1].")
-    tax_map, synonyms = load_default_mappings()
 
-    if custom_mapping is not None and not custom_mapping.empty:
-        missing = [c for c in ("taxon", "complex") if c not in custom_mapping.columns]
-        if missing:
-            raise ValueError(
-                "custom_mapping must have the columns 'taxon' and 'complex'; "
-                "missing: %s." % ", ".join(missing))
-        for t_name, c_name in zip(custom_mapping["taxon"], custom_mapping["complex"]):
-            tax_map[str(t_name).strip()] = str(c_name).strip()
+    synonyms = load_synonyms()
+    reference = merge_references(load_complex_reference(), custom_mapping)
+    species_lookup, genus_lookup = build_reference(reference, synonyms)
+    pc_names, pc_hmts = _signature_lookup(synonyms=synonyms)
 
-    lookup = build_lookup(tax_map)
-
-    # Taxonomy arrives as the q2-types DataFrame (Taxon + optional Confidence)
-    if isinstance(taxonomy, pd.Series):
-        taxonomy = taxonomy.to_frame("Taxon")
-    taxonomy_series = taxonomy["Taxon"] if "Taxon" in taxonomy.columns \
-        else taxonomy.iloc[:, 0]
-    confidence_series = None
-    if "Confidence" in taxonomy.columns:
-        # Missing / non-numeric confidences carry no information and are
-        # never filtered out.
-        confidence_series = pd.to_numeric(taxonomy["Confidence"],
-                                          errors="coerce")
+    taxa = _taxon_series(taxonomy)
+    confidence = _confidence_series(taxonomy)
 
     sample_ids = list(table.ids(axis="sample"))
     feature_ids = list(table.ids(axis="observation"))
+    missing_tax = [f for f in feature_ids if f not in taxa.index]
+    if missing_tax:
+        raise ValueError(
+            "%d feature(s) of the table have no taxonomy (e.g. %s)."
+            % (len(missing_tax), ", ".join(missing_tax[:5])))
 
-    # Map each feature to exactly one complex. Features whose classifier
-    # confidence is below min_confidence are sent to "Other" so that each
-    # sample's complex profile still sums to 1.
+    # Each feature belongs to exactly one complex, so that every sample's
+    # complex profile sums to 1. Features whose classifier confidence is
+    # below min_confidence go to "Other".
     feature_assignments = []
     w_matrix = np.zeros((len(feature_ids), len(COMPLEXES)))
+    pc_vector = np.zeros(len(feature_ids))
+    species_vector = np.zeros(len(feature_ids))
 
     for idx, f_id in enumerate(feature_ids):
-        tax_str = str(taxonomy_series.get(f_id, ""))
-        confidence = np.nan
-        if confidence_series is not None:
-            confidence = float(confidence_series.get(f_id, np.nan))
+        tax_str = str(taxa[f_id])
+        conf = np.nan
+        if confidence is not None:
+            conf = float(confidence.get(f_id, np.nan))
+        genus, species = parse_taxonomy_string(tax_str, synonyms)
 
-        if not np.isnan(confidence) and confidence < min_confidence:
+        low_conf = not np.isnan(conf) and conf < min_confidence
+        if low_conf:
             complex_name, resolution = "Other", "low-confidence"
         else:
             complex_name, resolution = assign_feature_to_complex(
-                tax_str, lookup, synonyms, assignment_mode
-            )
-        c_idx = COMPLEXES.index(complex_name)
-        w_matrix[idx, c_idx] = 1.0
+                tax_str, species_lookup, genus_lookup, synonyms)
+        w_matrix[idx, COMPLEXES.index(complex_name)] = 1.0
+
+        pc_member = (not low_conf
+                     and is_pc2014_taxon(species, pc_names, pc_hmts))
+        pc_vector[idx] = float(pc_member)
+        species_vector[idx] = float(
+            bool(species) and "/" not in species and not low_conf)
+
         feature_assignments.append({
             "Feature ID": f_id,
             "Taxonomy": tax_str,
+            "Genus": genus or "",
+            "Species": species or "",
             "Complex": complex_name,
             "Resolution": resolution,
-            "Confidence": confidence
+            "PC2014": "yes" if pc_member else "no",
+            "Confidence": conf
         })
 
-    # Collapsed complexes matrix Y = P W (N x K), computed sparsely as
-    # (X^T W) / depth so the feature table is never densified.
     counts = table.matrix_data  # sparse (M x N)
     depth = np.asarray(counts.sum(axis=0)).ravel()
-    depth[depth == 0] = 1.0  # Empty samples keep an all-zero profile
-    collapsed_matrix = np.asarray(counts.T @ w_matrix) / depth[:, None]
+    safe_depth = np.where(depth > 0, depth, 1.0)
     df_complexes = pd.DataFrame(
-        collapsed_matrix,
-        index=sample_ids,
-        columns=COMPLEXES
-    )
+        np.asarray(counts.T @ w_matrix) / safe_depth[:, None],
+        index=sample_ids, columns=COMPLEXES)
 
-    df_indices = compute_indices(
-        df_complexes, pseudocount, keystone_threshold, keystone_steepness
-    )
+    pc_fraction = np.asarray(counts.T @ pc_vector).ravel() / safe_depth
+    species_fraction = (np.asarray(counts.T @ species_vector).ravel()
+                        / safe_depth)
+
+    df_indices = pd.DataFrame(index=sample_ids)
+    signatures = [("SMDI", load_signature(SMDI_SPECIES)),
+                  ("SMDI_simplified", load_signature(SMDI_SIMPLIFIED))]
+    if smdi_signature is not None and not smdi_signature.empty:
+        signatures.append(("SMDI_custom", smdi_signature))
+    for column, signature in signatures:
+        smdi, missing = compute_smdi(table, taxonomy, signature, synonyms)
+        if missing:
+            warnings.warn(
+                "%s: %d signature taxa are absent from the table and enter "
+                "the index as zeros: %s"
+                % (column, len(missing), ", ".join(missing)), UserWarning)
+        df_indices[column] = smdi.reindex(sample_ids)
+
+    df_indices["PC2014_moderate"] = pc_fraction
+    empty = depth == 0
+    df_indices.loc[empty, "PC2014_moderate"] = np.nan
+    df_indices[QC_PREFIX + "depth"] = depth
+    df_indices[QC_PREFIX + "assigned_fraction"] = np.where(
+        empty, np.nan, 1.0 - df_complexes["Other"].to_numpy())
+    df_indices[QC_PREFIX + "species_fraction"] = np.where(
+        empty, np.nan, species_fraction)
 
     df_mapping = pd.DataFrame(feature_assignments).set_index("Feature ID")
-
     return df_complexes, df_indices, df_mapping
-
-
-def compute_indices(complexes, pseudocount=1e-5, keystone_threshold=0.005,
-                    keystone_steepness=1.0):
-    """
-    Computes pMDI, pMDI_ilr, SWL and KRS from a samples x complexes table of
-    relative abundances. `pseudocount` is added to every complex abundance of
-    every sample (relative-abundance scale) before taking logs.
-    """
-    if pseudocount <= 0:
-        raise ValueError("pseudocount must be > 0.")
-    if keystone_threshold <= 0:
-        raise ValueError("keystone_threshold must be > 0.")
-
-    y = complexes
-    dysbiotic = y[DYSBIOTIC].sum(axis=1)
-    health = y[EUBIOTIC].sum(axis=1)
-
-    # pMDI: log10 ratio of dysbiotic vs eubiotic complex totals
-    pmdi = np.log10((dysbiotic + pseudocount) / (health + pseudocount))
-
-    # pMDI_ilr: isometric log-ratio balance between the geometric means of
-    # the dysbiotic (r=3) and eubiotic (s=2) parts; sqrt(r*s/(r+s)) = sqrt(6/5)
-    log_y = np.log(y[DYSBIOTIC + EUBIOTIC] + pseudocount)
-    ilr_factor = np.sqrt(len(DYSBIOTIC) * len(EUBIOTIC)
-                         / (len(DYSBIOTIC) + len(EUBIOTIC)))
-    pmdi_ilr = ilr_factor * (log_y[DYSBIOTIC].mean(axis=1)
-                             - log_y[EUBIOTIC].mean(axis=1))
-
-    # SWL: virulence-weighted load
-    swl = y[COMPLEXES] @ pd.Series(WEIGHTS)[COMPLEXES]
-
-    # KRS: sigmoid centred on the keystone threshold theta, so the penalty
-    # factor is 1 at Red == theta, -> 2 above it and -> 1 - tanh(alpha) at 0.
-    red = y["Red"]
-    sigmoid = 1.0 + np.tanh(keystone_steepness
-                            * (red - keystone_threshold) / keystone_threshold)
-    krs = sigmoid * (red + y["Extended"] + 0.5 * y["Orange"])
-
-    return pd.DataFrame({
-        "pMDI": pmdi,
-        "pMDI_ilr": pmdi_ilr,
-        "SWL": swl,
-        "KRS": krs
-    }, index=complexes.index)
 
 
 def _normalize_label(value):
@@ -343,6 +572,11 @@ def _normalize_label(value):
     if isinstance(value, (float, np.floating)) and float(value).is_integer():
         return str(int(value))
     return str(value)
+
+
+def index_columns(indices):
+    """Dysbiosis index columns, without the quality-control ones."""
+    return [c for c in indices.columns if not str(c).startswith(QC_PREFIX)]
 
 
 def delta_indices(
@@ -355,13 +589,17 @@ def delta_indices(
 ) -> pd.DataFrame:
     """
     Computes paired longitudinal deltas (target minus baseline) of every
-    index in `indices`, one row per subject. The output index is the subject
-    ID taken from `subject_col`.
+    dysbiosis index in `indices` (quality-control columns are skipped), one
+    row per subject. When a subject has several samples in a group (e.g.
+    several sites), their mean is used. The output index is the subject ID
+    taken from `subject_col`.
     """
     metadata_df = metadata.to_dataframe()
-    missing = [c for c in (subject_col, group_col) if c not in metadata_df.columns]
+    missing = [c for c in (subject_col, group_col)
+               if c not in metadata_df.columns]
     if missing:
-        raise ValueError("Metadata column(s) not found: %s." % ", ".join(missing))
+        raise ValueError("Metadata column(s) not found: %s."
+                         % ", ".join(missing))
 
     # Join only the two needed columns, under private names, to avoid any
     # collision with index or metadata column names.
@@ -385,25 +623,22 @@ def delta_indices(
                 "must be numbers (got %r and %r)."
                 % (group_col, baseline_group, target_group)) from None
 
-    metrics = list(indices.columns)
-    merged = indices.join(design, how="inner")
+    metrics = index_columns(indices)
+    merged = indices[metrics].join(design, how="inner")
     merged = merged[merged["__group__"].isin([baseline_label, target_label])]
 
-    counts = merged.groupby(["__subject__", "__group__"]).size()
-    duplicated = sorted(set(counts[counts > 1].index.get_level_values(0)))
-    if duplicated:
-        raise ValueError(
-            "More than one sample per subject and group for subject(s): %s. "
-            "Each subject must have at most one '%s' and one '%s' sample."
-            % (", ".join(duplicated), baseline_group, target_group))
-
-    baseline = merged[merged["__group__"] == baseline_label].set_index("__subject__")[metrics]
-    target = merged[merged["__group__"] == target_label].set_index("__subject__")[metrics]
+    # Several sites per subject and visit are averaged, so each subject
+    # contributes a single observation per visit.
+    per_visit = merged.groupby(["__subject__", "__group__"])[metrics].mean()
+    groups = per_visit.index.get_level_values("__group__")
+    baseline = per_visit[groups == baseline_label].droplevel("__group__")
+    target = per_visit[groups == target_label].droplevel("__group__")
     paired = baseline.index.intersection(target.index)
     if len(paired) == 0:
         raise ValueError(
             "No subject in '%s' has samples in both groups '%s' and '%s' of "
-            "column '%s'." % (subject_col, baseline_group, target_group, group_col))
+            "column '%s'." % (subject_col, baseline_group, target_group,
+                              group_col))
 
     df_res = target.loc[paired] - baseline.loc[paired]
     df_res = df_res.sort_index()

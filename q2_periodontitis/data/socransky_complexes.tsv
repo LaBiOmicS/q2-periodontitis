@@ -1,0 +1,33 @@
+taxon	complex	level	source	evidence
+Porphyromonas gingivalis	Red	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Tannerella forsythia	Red	species	socransky1998microbial	as Bacteroides forsythus; 1998 abstract; 2002 Fig. 1 and Fig. 11
+Treponema denticola	Red	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Fusobacterium nucleatum	Orange	species	socransky1998microbial	subspecies not resolved; all subspecies on the panel are Orange (2002 Fig. 11)
+Fusobacterium nucleatum subsp. nucleatum	Orange	species	socransky1998microbial	2002 Fig. 1 and Fig. 11
+Fusobacterium nucleatum subsp. polymorphum	Orange	species	socransky1998microbial	2002 Fig. 1 and Fig. 11
+Fusobacterium nucleatum subsp. vincentii	Orange	species	socransky2002dental	2002 Fig. 11
+Fusobacterium periodonticum	Orange	species	socransky2002dental	2002 Fig. 11; 1998 abstract: F. nucleatum/periodonticum subspecies
+Prevotella intermedia	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Prevotella nigrescens	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Parvimonas micra	Orange	species	socransky1998microbial	as Peptostreptococcus micros; 1998 abstract; 2002 Fig. 1 and Fig. 11
+Eubacterium nodatum	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Campylobacter rectus	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Campylobacter showae	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Campylobacter gracilis	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Streptococcus constellatus	Orange	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Streptococcus sanguinis	Yellow	species	socransky1998microbial	as S. sanguis; 1998 abstract; 2002 Fig. 1 and Fig. 11
+Streptococcus oralis	Yellow	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Streptococcus oralis subsp. oralis	Yellow	species	socransky1998microbial	S. oralis as defined in 1998; subsp. dentisani and tigurinus were described later and are not assigned
+Streptococcus mitis	Yellow	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Streptococcus gordonii	Yellow	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Streptococcus intermedius	Yellow	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Capnocytophaga gingivalis	Green	species	socransky1998microbial	2002 Fig. 1 and Fig. 11
+Capnocytophaga ochracea	Green	species	socransky1998microbial	2002 Fig. 1 and Fig. 11
+Capnocytophaga sputigena	Green	species	socransky1998microbial	2002 Fig. 1 and Fig. 11
+Eikenella corrodens	Green	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Campylobacter concisus	Green	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Veillonella parvula	Purple	species	socransky1998microbial	1998 abstract; 2002 Fig. 1 and Fig. 11
+Schaalia odontolytica	Purple	species	socransky1998microbial	as Actinomyces odontolyticus; 1998 abstract; 2002 Fig. 1 and Fig. 11
+Actinomyces naeslundii	Blue	species	socransky2002dental	2002 Fig. 11 (A. naeslundii 2)
+Actinomyces viscosus	Blue	species	socransky2002dental	A. naeslundii genospecies 2 (1998 abstract); 2002 Fig. 11
+Actinomyces	Blue	genus	socransky2002dental	2002 Fig. 1 labels the blue group 'Actinomyces species'

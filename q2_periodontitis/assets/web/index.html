@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>q2-periodontitis: Periodontal Biofilm & Dysbiosis Report</title>
+    <title>q2-periodontitis: Socransky complexes and dysbiosis indices</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="js/vega.min.js"></script>
     <script src="js/vega-lite.min.js"></script>
@@ -12,48 +12,49 @@
 <body>
     <div class="container">
         <header>
-            <h1>q2-periodontitis Analytical Dashboard</h1>
-            <p>Subgingival Biofilm Socransky Complexes Collapse & Clinical Dysbiosis Metrics</p>
+            <h1>q2-periodontitis</h1>
+            <p>Socransky complexes and subgingival dysbiosis indices</p>
         </header>
 
-        <!-- Summary & Data Export -->
         <div class="card">
-            <h2>Summary Overview & Data Download</h2>
-            <p>Total Samples: <strong>{{ total_samples }}</strong> | Total Features Mapped: <strong>{{ total_features }}</strong></p>
+            <h2>Summary and data download</h2>
+            <p>Samples: <strong>{{ total_samples }}</strong> | Features: <strong>{{ total_features }}</strong></p>
             <p>
-                <a href="data/complexes.tsv" download class="btn">Download Complexes TSV</a>
-                <a href="data/indices.tsv" download class="btn">Download Dysbiosis Indices TSV</a>
+                <a href="data/complexes.tsv" download class="btn">Complexes TSV</a>
+                <a href="data/indices.tsv" download class="btn">Indices TSV</a>
             </p>
         </div>
 
-        <!-- Interactive Barplot Card -->
         <div class="card">
-            <h2>Socransky Ecological Complexes Distribution</h2>
-            <div id="complexes-plot" class="chart-container"></div>
-        </div>
-
-        <!-- Dysbiosis Indices Plot Card -->
-        <div class="card">
-            <h2>Periodontal Microbial Dysbiosis Index (pMDI) vs Socransky Weighted Load (SWL)</h2>
-            <div id="indices-plot" class="chart-container"></div>
-        </div>
-
-        <!-- Resolution Audit Card -->
-        <div class="card">
-            <h2>Taxonomic Resolution Audit</h2>
+            <h2>Taxonomic resolution (quality control)</h2>
+            <p>Complexes are assigned from species names (and the <em>Actinomyces</em> genus for the Blue
+               group). Reads that are not resolved to a listed species fall into <em>Other</em>, so the
+               complex profile is only as informative as the fraction of reads it covers.</p>
+            {% if qc_rows %}
             <div class="table-responsive">
                 <table>
-                    <thead>
+                    <thead><tr><th>Per-sample measure</th><th>Min</th><th>Median</th><th>Max</th></tr></thead>
+                    <tbody>
+                        {% for row in qc_rows %}
                         <tr>
-                            <th>Resolution Level</th>
-                            <th>Count</th>
-                            <th>Percentage</th>
+                            <td><strong>{{ row.label }}</strong></td>
+                            <td>{{ "%.4g" | format(row.min) }}</td>
+                            <td>{{ "%.4g" | format(row.median) }}</td>
+                            <td>{{ "%.4g" | format(row.max) }}</td>
                         </tr>
-                    </thead>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+            {% if resolution_counts %}
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Feature resolution</th><th>Features</th><th>Percentage</th></tr></thead>
                     <tbody>
                         {% for level, count in resolution_counts.items() %}
                         <tr>
-                            <td><strong>{{ level | capitalize }}</strong></td>
+                            <td><strong>{{ level }}</strong></td>
                             <td>{{ count }}</td>
                             <td>{{ "%.2f" | format((count / total_features) * 100) }}%</td>
                         </tr>
@@ -61,34 +62,51 @@
                     </tbody>
                 </table>
             </div>
+            {% endif %}
         </div>
 
-        <!-- Statistical Comparisons Card -->
-        {% if stats_results %}
         <div class="card">
-            <h2>Non-Parametric Statistical Group Comparisons</h2>
-            <p>Each dysbiosis index is compared across the groups of every categorical metadata column
-               (Mann-Whitney U for two groups, Kruskal-Wallis for more). q-values are Benjamini-Hochberg
-               FDR-adjusted across all tests shown; tests with q &lt; {{ fdr_alpha }} are highlighted.</p>
+            <h2>Socransky complexes</h2>
+            <div id="complexes-plot" class="chart-container"></div>
+        </div>
+
+        <div class="card">
+            <h2>Dysbiosis indices{% if group_column %} by {{ group_column }}{% endif %}</h2>
+            <p><strong>SMDI</strong> (49 species) / <strong>SMDI_simplified</strong> (3 genera): Chen, Marsh &amp;
+               Al-Hebshi (2022); higher values indicate a periodontitis-like profile (published cut-offs: about
+               0.5 for SMDI, 0 for SMDI_simplified; see the documentation).               <strong>PC2014_moderate</strong>: fraction of reads from the moderate-evidence taxa of
+               P&eacute;rez-Chaparro et al. (2014).</p>
+            <div id="indices-plot" class="chart-container"></div>
+        </div>
+
+        {% if group_column %}
+        <div class="card">
+            <h2>Group comparisons: {{ group_column }}</h2>
+            <p>Unit of analysis: <strong>{{ unit_label }}</strong>.
+               {% if not subject_column %}If subjects contributed more than one sample, set
+               <code>--p-subject-column</code>: otherwise those samples are treated as independent and the
+               p-values are too small.{% endif %}
+               Mann-Whitney U (two groups) or Kruskal-Wallis (more groups); q-values are
+               Benjamini-Hochberg adjusted across the indices, q &lt; {{ fdr_alpha }} highlighted.
+               AUC is the probability that a unit of the second group has a higher value than one of the
+               first (0.5 = no separation).</p>
+            {% if stats_results %}
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Metric</th>
-                            <th>Metadata Column</th>
-                            <th>Test Method</th>
-                            <th>Statistic</th>
-                            <th>p-value</th>
-                            <th>q-value</th>
+                            <th>Index</th><th>Groups</th><th>Test</th><th>Statistic</th>
+                            <th>Effect size</th><th>p-value</th><th>q-value</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for stat in stats_results %}
                         <tr>
                             <td><strong>{{ stat.metric }}</strong></td>
-                            <td>{{ stat.column }}</td>
+                            <td>{{ stat.groups }}</td>
                             <td>{{ stat.method }}</td>
-                            <td>{{ "%.4f" | format(stat.statistic) }}</td>
+                            <td>{{ "%.4g" | format(stat.statistic) }}</td>
+                            <td>{{ stat.effect_name }} = {{ "%.3f" | format(stat.effect) }}</td>
                             <td>{{ "%.4g" | format(stat.p_value) }}</td>
                             <td>
                                 {% if stat.significant %}
@@ -102,12 +120,14 @@
                     </tbody>
                 </table>
             </div>
+            {% else %}
+            <p>No test could be run (each group needs at least two units with values).</p>
+            {% endif %}
         </div>
         {% endif %}
 
-        <!-- Data Preview Table -->
         <div class="card">
-            <h2>Calculated Indices Preview</h2>
+            <h2>Indices preview (first 20 samples)</h2>
             <div class="table-responsive">
                 {{ indices_table_html | safe }}
             </div>
@@ -119,7 +139,6 @@
         const indicesData = {{ indices_json | safe }};
         const colorMap = {{ color_map_json | safe }};
 
-        // 1. Stacked Bar Chart for Complexes
         const complexesSpec = {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "data": {"values": complexesData},
@@ -127,41 +146,48 @@
             "width": "container",
             "height": 350,
             "encoding": {
-                "x": {"field": "sample_id", "type": "nominal", "title": "Sample ID", "sort": null},
-                "y": {"field": "abundance", "type": "quantitative", "title": "Relative Abundance", "stack": "normalize"},
-                "color": {
-                    "field": "complex",
-                    "type": "nominal",
-                    "title": "Ecological Complex",
-                    "scale": {
-                        "domain": Object.keys(colorMap),
-                        "range": Object.values(colorMap)
-                    }
-                },
+                "x": {"field": "sample_id", "type": "nominal", "title": "Sample ID",
+                      "sort": {"field": "group"}},
+                "y": {"field": "abundance", "type": "quantitative", "title": "Relative abundance",
+                      "stack": "normalize"},
+                "color": {"field": "complex", "type": "nominal", "title": "Complex",
+                          "scale": {"domain": Object.keys(colorMap), "range": Object.values(colorMap)}},
+                "order": {"field": "complex"},
                 "tooltip": [
                     {"field": "sample_id", "title": "Sample"},
+                    {"field": "group", "title": "Group"},
                     {"field": "complex", "title": "Complex"},
                     {"field": "abundance", "title": "Abundance", "format": ".4f"}
                 ]
             }
         };
 
-        // 2. Scatter Plot for pMDI vs SWL
         const indicesSpec = {
             "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
             "data": {"values": indicesData},
-            "mark": {"type": "circle", "size": 90},
-            "width": "container",
-            "height": 350,
-            "encoding": {
-                "x": {"field": "pMDI", "type": "quantitative", "title": "pMDI (Periodontal Microbial Dysbiosis Index)"},
-                "y": {"field": "SWL", "type": "quantitative", "title": "SWL (Socransky Weighted Load)"},
-                "color": {"field": "KRS", "type": "quantitative", "title": "Keystone Risk Score (KRS)", "scale": {"scheme": "viridis"}},
-                "tooltip": [
-                    {"field": "sample_id", "title": "Sample"},
-                    {"field": "pMDI", "format": ".3f"},
-                    {"field": "SWL", "format": ".3f"},
-                    {"field": "KRS", "format": ".3f"}
+            "transform": [{"filter": "datum.value !== null"}],
+            "facet": {"column": {"field": "metric", "type": "nominal", "title": null}},
+            "resolve": {"scale": {"y": "independent"}},
+            "spec": {
+                "width": 160,
+                "height": 280,
+                "layer": [
+                    {"mark": {"type": "boxplot", "extent": "min-max", "opacity": 0.5},
+                     "encoding": {
+                        "x": {"field": "group", "type": "nominal", "title": null},
+                        "y": {"field": "value", "type": "quantitative", "title": "Value"}
+                     }},
+                    {"mark": {"type": "point", "filled": true, "size": 25, "opacity": 0.6},
+                     "encoding": {
+                        "x": {"field": "group", "type": "nominal"},
+                        "y": {"field": "value", "type": "quantitative"},
+                        "color": {"field": "group", "type": "nominal", "legend": null},
+                        "tooltip": [
+                            {"field": "sample_id", "title": "Sample"},
+                            {"field": "metric", "title": "Index"},
+                            {"field": "value", "format": ".3f"}
+                        ]
+                     }}
                 ]
             }
         };

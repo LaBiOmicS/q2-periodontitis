@@ -1,2 +1,2 @@
-Feature ID	Taxonomy	Complex	Resolution	Confidence
-F1	g__Porphyromonas;s__Porphyromonas_gingivalis	Red	species	0.99
+Feature ID	Taxonomy	Genus	Species	Complex	Resolution	PC2014	Confidence
+F1	g__Porphyromonas;s__Porphyromonas_gingivalis	Porphyromonas	Porphyromonas gingivalis	Red	species	no	0.99

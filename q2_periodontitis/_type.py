@@ -25,3 +25,7 @@ SocranskyMapping = SemanticType(
 
 # User-supplied taxon -> complex reference table (not tied to feature IDs)
 SocranskyReference = SemanticType('SocranskyReference')
+
+# Taxa whose CLR abundances define a dysbiosis index (SMDI): taxon,
+# direction (dysbiotic / normobiotic) and level (species / genus)
+DysbiosisSignature = SemanticType('DysbiosisSignature')

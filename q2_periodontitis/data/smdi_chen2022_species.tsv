@@ -1,0 +1,50 @@
+taxon	direction	level	source	original_label	mean_decrease_gini
+Treponema denticola	dysbiotic	species	chen2022smdi	Treponema denticola	4.8866
+Mogibacterium timidum	dysbiotic	species	chen2022smdi	Mogibacterium timidum	4.6182
+Fretibacterium sp. HMT 360	dysbiotic	species	chen2022smdi	Fretibacterium sp._oral_taxon_360	3.5558
+Fretibacterium fastidiosum	dysbiotic	species	chen2022smdi	Fretibacterium fastidiosum	3.1681
+Tannerella forsythia	dysbiotic	species	chen2022smdi	Tannerella forsythia	3.0492
+Treponema maltophilum	dysbiotic	species	chen2022smdi	Treponema maltophilum	2.9880
+Eubacterium saphenum	dysbiotic	species	chen2022smdi	Peptostreptococcaceae_[XI][G-5] [Eubacterium]_saphenum	2.7414
+Eubacterium nodatum	dysbiotic	species	chen2022smdi	Peptostreptococcaceae_[XI][G-6] [Eubacterium]_nodatum	2.4781
+Filifactor alocis	dysbiotic	species	chen2022smdi	Filifactor alocis	2.4229
+Desulfobulbus sp. HMT 041	dysbiotic	species	chen2022smdi	Desulfobulbus sp._oral_taxon_041	2.3811
+Treponema socranskii	dysbiotic	species	chen2022smdi	Treponema socranskii	1.9608
+Treponema sp. HMT 237	dysbiotic	species	chen2022smdi	Treponema sp._oral_taxon_237	1.4287
+Phocaeicola abscessus	dysbiotic	species	chen2022smdi	Bacteroidaceae_[G-1] sp._oral_taxon_272	1.2096
+Lachnospiraceae [G-8] bacterium HMT 500	dysbiotic	species	chen2022smdi	Lachnospiraceae_[G-8] sp._oral_taxon_500	1.2004
+Streptococcus constellatus	dysbiotic	species	chen2022smdi	Streptococcus constellatus	1.1582
+Bacteroidales [G-2] bacterium HMT 274	dysbiotic	species	chen2022smdi	Bacteroidales_[G-2] sp._oral_taxon_274	1.0911
+Porphyromonas endodontalis	dysbiotic	species	chen2022smdi	Porphyromonas endodontalis	1.0689
+Mycoplasma faucium	dysbiotic	species	chen2022smdi	Mycoplasma faucium	0.9773
+Porphyromonas gingivalis	dysbiotic	species	chen2022smdi	Porphyromonas gingivalis	0.9098
+Anaerolineae [G-1] bacterium HMT 439	dysbiotic	species	chen2022smdi	Anaerolineae_[G-1] sp._oral_taxon_439	0.8858
+Peptostreptococcaceae [G-4] bacterium HMT 103	dysbiotic	species	chen2022smdi	Peptostreptococcaceae_[XI][G-4] sp._oral_taxon_103	0.8167
+Fretibacterium sp. HMT 362	dysbiotic	species	chen2022smdi	Fretibacterium sp._oral_taxon_362	0.7943
+Fusobacterium nucleatum subsp. vincentii	dysbiotic	species	chen2022smdi	Fusobacterium nucleatum_subsp._vincentii	0.7406
+Treponema medium	dysbiotic	species	chen2022smdi	Treponema medium	0.5707
+Fretibacterium sp. HMT 359	dysbiotic	species	chen2022smdi	Fretibacterium sp._oral_taxon_359	0.5536
+Peptostreptococcaceae [G-4] bacterium HMT 369	dysbiotic	species	chen2022smdi	Peptostreptococcaceae_[XI][G-4] sp._oral_taxon_369	0.5519
+Bacteroidetes [G-3] bacterium HMT 280	dysbiotic	species	chen2022smdi	Bacteroidetes_[G-3] sp._oral_taxon_280	0.5318
+Treponema lecithinolyticum	dysbiotic	species	chen2022smdi	Treponema lecithinolyticum	0.5267
+Fretibacterium sp. HMT 361	dysbiotic	species	chen2022smdi	Fretibacterium sp._oral_taxon_361	0.4528
+Eubacterium brachy	dysbiotic	species	chen2022smdi	Peptostreptococcaceae_[XI][G-9] [Eubacterium]_brachy	0.4287
+Aggregatibacter sp. HMT 458	dysbiotic	species	chen2022smdi	Aggregatibacter sp._oral_taxon_458	0.4172
+Streptococcus sanguinis	normobiotic	species	chen2022smdi	Streptococcus sanguinis	2.0463
+Actinomyces naeslundii	normobiotic	species	chen2022smdi	Actinomyces naeslundii	1.9016
+Gemella haemolysans	normobiotic	species	chen2022smdi	Gemella haemolysans	1.2954
+Rothia aeria	normobiotic	species	chen2022smdi	Rothia aeria	1.1531
+Granulicatella adiacens	normobiotic	species	chen2022smdi	Granulicatella adiacens	1.0566
+Rothia dentocariosa	normobiotic	species	chen2022smdi	Rothia dentocariosa	0.9673
+Streptococcus mitis	normobiotic	species	chen2022smdi	Streptococcus mitis	0.8049
+Actinomyces sp. HMT 175	normobiotic	species	chen2022smdi	Actinomyces sp._oral_taxon_175	0.7267
+Actinomyces sp. HMT 169	normobiotic	species	chen2022smdi	Actinomyces sp._oral_taxon_169	0.7151
+Enhydrobacter aerosaccus	normobiotic	species	chen2022smdi	Enhydrobacter aerosaccus	0.6778
+Comamonas testosteroni	normobiotic	species	chen2022smdi	Comamonas testosteroni	0.6777
+Veillonella parvula	normobiotic	species	chen2022smdi	Veillonella parvula_group	0.6164
+Cutibacterium acnes	normobiotic	species	chen2022smdi	Propionibacterium acnes	0.5438
+Corynebacterium durum	normobiotic	species	chen2022smdi	Corynebacterium durum	0.5217
+Prevotella loescheii	normobiotic	species	chen2022smdi	Prevotella loescheii	0.4918
+Acinetobacter baumannii	normobiotic	species	chen2022smdi	Acinetobacter baumannii	0.4648
+Corynebacterium matruchotii	normobiotic	species	chen2022smdi	Corynebacterium matruchotii	0.4477
+Streptococcus infantis	normobiotic	species	chen2022smdi	Streptococcus infantis	0.4286

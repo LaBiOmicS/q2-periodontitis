@@ -1,3 +1,3 @@
-sample-id	pMDI	pMDI_ilr	SWL	KRS
-S1	-0.22	-4.09	0.23	0.4
-S2	0.0	0.0	0.0	0.0
+sample-id	SMDI	SMDI_simplified	PC2014_moderate	qc_depth
+S1	-0.22	-4.09	0.23	100.0
+S2				0.0

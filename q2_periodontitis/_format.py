@@ -1,9 +1,10 @@
 import qiime2.plugin.model as model
 
-from ._methods import COMPLEXES
+from ._methods import COMPLEXES, DIRECTIONS, LEVELS
 
 class NumericTableFormat(model.TextFileFormat):
-    """Tab-separated table: an ID column followed by numeric columns."""
+    """Tab-separated table: an ID column followed by numeric columns; empty
+    fields are missing values."""
 
     def _validate_(self, level):
         max_lines = {'min': 100, 'max': None}[level]
@@ -28,6 +29,10 @@ class NumericTableFormat(model.TextFileFormat):
                         "Line %d has %d fields, expected %d."
                         % (line_no, len(fields), len(columns)))
                 for value in fields[1:]:
+                    if value == '':
+                        # Missing value (e.g. an index undefined for an
+                        # empty sample)
+                        continue
                     try:
                         float(value)
                     except ValueError:
@@ -122,4 +127,57 @@ SocranskyReferenceDirectoryFormat = model.SingleFileDirectoryFormat(
     'SocranskyReferenceDirectoryFormat',
     'reference.tsv',
     SocranskyReferenceFormat
+)
+
+
+class DysbiosisSignatureFormat(model.TextFileFormat):
+    """Tab-separated list of signature taxa with a mandatory header that
+    contains the columns ``taxon``, ``direction`` (dysbiotic or
+    normobiotic) and ``level`` (species or genus)."""
+
+    def _validate_(self, level):
+        max_lines = {'min': 100, 'max': None}[level]
+        with self.open() as fh:
+            header = fh.readline().rstrip('\r\n')
+            if not header:
+                raise model.ValidationError("File is empty.")
+            columns = [c.strip() for c in header.split('\t')]
+            missing = [c for c in ('taxon', 'direction', 'level')
+                       if c not in columns]
+            if missing:
+                raise model.ValidationError(
+                    "Header must be tab-separated and contain the columns "
+                    "'taxon', 'direction' and 'level'; missing: %s."
+                    % ', '.join(missing))
+            idx = {c: columns.index(c) for c in ('taxon', 'direction', 'level')}
+
+            for line_no, line in enumerate(fh, start=2):
+                if max_lines is not None and line_no > max_lines + 1:
+                    break
+                line = line.rstrip('\r\n')
+                if not line.strip():
+                    continue
+                fields = line.split('\t')
+                if len(fields) != len(columns):
+                    raise model.ValidationError(
+                        "Line %d has %d fields, expected %d."
+                        % (line_no, len(fields), len(columns)))
+                if not fields[idx['taxon']].strip():
+                    raise model.ValidationError(
+                        "Line %d has an empty taxon." % line_no)
+                direction = fields[idx['direction']].strip().lower()
+                if direction not in DIRECTIONS:
+                    raise model.ValidationError(
+                        "Line %d: invalid direction %r. Valid: %s."
+                        % (line_no, direction, ', '.join(DIRECTIONS)))
+                tax_level = fields[idx['level']].strip().lower()
+                if tax_level not in LEVELS:
+                    raise model.ValidationError(
+                        "Line %d: invalid level %r. Valid: %s."
+                        % (line_no, tax_level, ', '.join(LEVELS)))
+
+DysbiosisSignatureDirectoryFormat = model.SingleFileDirectoryFormat(
+    'DysbiosisSignatureDirectoryFormat',
+    'signature.tsv',
+    DysbiosisSignatureFormat
 )

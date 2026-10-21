@@ -15,14 +15,17 @@ from q2_periodontitis._format import (
     SocranskyMappingFormat,
     SocranskyMappingDirectoryFormat,
     SocranskyReferenceFormat,
-    SocranskyReferenceDirectoryFormat
+    SocranskyReferenceDirectoryFormat,
+    DysbiosisSignatureFormat,
+    DysbiosisSignatureDirectoryFormat
 )
 from q2_periodontitis._type import (
     SocranskyComplexes,
     PeriodontalIndices,
     PeriodontalIndicesDelta,
     SocranskyMapping,
-    SocranskyReference
+    SocranskyReference,
+    DysbiosisSignature
 )
 from q2_types.sample_data import SampleData
 
@@ -33,7 +36,7 @@ class TestTypes(TestPluginBase):
     def test_types_registered(self):
         for semantic_type in (SocranskyComplexes, PeriodontalIndices,
                               PeriodontalIndicesDelta, SocranskyMapping,
-                              SocranskyReference):
+                              SocranskyReference, DysbiosisSignature):
             self.assertRegisteredSemanticType(semantic_type)
 
     def test_types_to_formats(self):
@@ -48,6 +51,8 @@ class TestTypes(TestPluginBase):
             SocranskyMapping, SocranskyMappingDirectoryFormat)
         self.assertSemanticTypeRegisteredToFormat(
             SocranskyReference, SocranskyReferenceDirectoryFormat)
+        self.assertSemanticTypeRegisteredToFormat(
+            DysbiosisSignature, DysbiosisSignatureDirectoryFormat)
 
 
 class TestFormatValidation(TestPluginBase):
@@ -59,7 +64,8 @@ class TestFormatValidation(TestPluginBase):
                           (PeriodontalIndicesDeltaFormat, "deltas.tsv"),
                           (SocranskyMappingFormat, "mapping.tsv"),
                           (SocranskyReferenceFormat, "reference-valid.tsv"),
-                          (SocranskyReferenceFormat, "reference-extra-column.tsv")]:
+                          (SocranskyReferenceFormat, "reference-extra-column.tsv"),
+                          (DysbiosisSignatureFormat, "signature-valid.tsv")]:
             fmt(self.get_data_path(name), mode="r").validate()
 
     def test_indices_non_numeric(self):
@@ -71,6 +77,24 @@ class TestFormatValidation(TestPluginBase):
         with self.assertRaisesRegex(ValidationError, "fields"):
             PeriodontalIndicesFormat(self.get_data_path("indices-ragged.tsv"),
                                      mode="r").validate()
+
+    def test_indices_missing_values_are_valid(self):
+        # indices.tsv has empty fields for an empty sample
+        PeriodontalIndicesFormat(self.get_data_path("indices.tsv"),
+                                 mode="r").validate()
+
+    def test_signature_invalid(self):
+        with self.assertRaisesRegex(ValidationError, "invalid direction 'bad'"):
+            DysbiosisSignatureFormat(
+                self.get_data_path("signature-invalid-direction.tsv"),
+                mode="r").validate()
+        with self.assertRaisesRegex(ValidationError, "invalid level 'phylum'"):
+            DysbiosisSignatureFormat(
+                self.get_data_path("signature-invalid-level.tsv"),
+                mode="r").validate()
+        with self.assertRaisesRegex(ValidationError, "taxon.*direction"):
+            DysbiosisSignatureFormat(
+                self.get_data_path("reference-valid.tsv"), mode="r").validate()
 
     def test_reference_invalid_complex(self):
         with self.assertRaisesRegex(ValidationError, "invalid complex 'Pink'"):
@@ -106,7 +130,9 @@ class TestTransformers(TestPluginBase):
 
     def test_indices_roundtrip(self):
         df = self.roundtrip(PeriodontalIndicesFormat, "indices.tsv")
-        self.assertEqual(list(df.columns), ["pMDI", "pMDI_ilr", "SWL", "KRS"])
+        self.assertEqual(list(df.columns),
+                         ["SMDI", "SMDI_simplified", "PC2014_moderate", "qc_depth"])
+        self.assertTrue(df.loc["S2", ["SMDI", "SMDI_simplified"]].isna().all())
 
     def test_delta_roundtrip_keeps_string_subject_ids(self):
         df = self.roundtrip(PeriodontalIndicesDeltaFormat, "deltas.tsv")
@@ -120,7 +146,11 @@ class TestTransformers(TestPluginBase):
     def test_reference_roundtrip(self):
         df = self.roundtrip(SocranskyReferenceFormat, "reference-valid.tsv")
         self.assertEqual(list(df["taxon"]), ["Selenomonas noxia", "Lactobacillus casei"])
-        self.assertEqual(list(df["complex"]), ["Extended", "Yellow"])
+        self.assertEqual(list(df["complex"]), ["Green", "Yellow"])
+
+    def test_signature_roundtrip(self):
+        df = self.roundtrip(DysbiosisSignatureFormat, "signature-valid.tsv")
+        self.assertEqual(list(df["direction"]), ["dysbiotic", "normobiotic"])
 
     def test_to_metadata(self):
         for fmt, name in [(SocranskyComplexesFormat, "complexes.tsv"),

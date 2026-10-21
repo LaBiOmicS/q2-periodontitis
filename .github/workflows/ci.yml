@@ -50,7 +50,7 @@ jobs:
         run: |
           pip wheel . --no-deps --no-build-isolation -w dist
           python -m zipfile -l dist/*.whl | tee wheel-contents.txt
-          for f in q2_periodontitis/citations.bib q2_periodontitis/data/ehomd_map.tsv \
+          for f in q2_periodontitis/citations.bib q2_periodontitis/data/socransky_complexes.tsv \
                    q2_periodontitis/assets/web/index.html q2_periodontitis/assets/web/js/vega.min.js \
                    entry_points.txt; do
             grep -q "$f" wheel-contents.txt || { echo "missing $f"; exit 1; }

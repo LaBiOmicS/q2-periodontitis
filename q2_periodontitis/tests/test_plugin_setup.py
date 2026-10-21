@@ -19,18 +19,25 @@ class TestPluginSetup(TestPluginBase):
                     'PeriodontalIndicesDirectoryFormat',
                     'PeriodontalIndicesDeltaDirectoryFormat',
                     'SocranskyMappingDirectoryFormat',
-                    'SocranskyReferenceDirectoryFormat']:
+                    'SocranskyReferenceDirectoryFormat',
+                    'DysbiosisSignatureDirectoryFormat']:
             self.assertIn(fmt, self.plugin.formats)
 
     def test_collapse_signature(self):
         sig = self.plugin.methods['collapse_complexes'].signature
         self.assertIn('min_confidence', sig.parameters)
-        self.assertIn('pseudocount', sig.parameters)
         self.assertEqual(str(sig.inputs['custom_mapping'].qiime_type),
                          'SocranskyReference')
-        modes = sig.parameters['assignment_mode'].qiime_type
-        self.assertIn('strict', str(modes))
-        self.assertNotIn('probabilistic', str(modes))
+        self.assertEqual(str(sig.inputs['smdi_signature'].qiime_type),
+                         'DysbiosisSignature')
+        self.assertNotIn('assignment_mode', sig.parameters)
+        self.assertNotIn('keystone_threshold', sig.parameters)
+        self.assertNotIn('pseudocount', sig.parameters)
+
+    def test_summarize_signature(self):
+        sig = self.plugin.visualizers['summarize'].signature
+        self.assertIn('group_column', sig.parameters)
+        self.assertIn('subject_column', sig.parameters)
 
     def test_delta_signature(self):
         sig = self.plugin.methods['delta_indices'].signature
