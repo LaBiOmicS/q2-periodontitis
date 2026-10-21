@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>q2-periodontitis: Periodontal Biofilm & Dysbiosis Report</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script src="js/vega.min.js"></script>
+    <script src="js/vega-lite.min.js"></script>
+    <script src="js/vega-embed.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -67,6 +67,9 @@
         {% if stats_results %}
         <div class="card">
             <h2>Non-Parametric Statistical Group Comparisons</h2>
+            <p>Each dysbiosis index is compared across the groups of every categorical metadata column
+               (Mann-Whitney U for two groups, Kruskal-Wallis for more). q-values are Benjamini-Hochberg
+               FDR-adjusted across all tests shown; tests with q &lt; {{ fdr_alpha }} are highlighted.</p>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -76,6 +79,7 @@
                             <th>Test Method</th>
                             <th>Statistic</th>
                             <th>p-value</th>
+                            <th>q-value</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,11 +89,12 @@
                             <td>{{ stat.column }}</td>
                             <td>{{ stat.method }}</td>
                             <td>{{ "%.4f" | format(stat.statistic) }}</td>
+                            <td>{{ "%.4g" | format(stat.p_value) }}</td>
                             <td>
-                                {% if stat.p_value < 0.05 %}
-                                <span class="badge" style="background-color: #27ae60;">{{ "%.4e" | format(stat.p_value) }}</span>
+                                {% if stat.significant %}
+                                <span class="badge" style="background-color: #27ae60;">{{ "%.4g" | format(stat.q_value) }}</span>
                                 {% else %}
-                                <span class="badge" style="background-color: #7f8c8d;">{{ "%.4f" | format(stat.p_value) }}</span>
+                                <span class="badge" style="background-color: #7f8c8d;">{{ "%.4g" | format(stat.q_value) }}</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -104,7 +109,7 @@
         <div class="card">
             <h2>Calculated Indices Preview</h2>
             <div class="table-responsive">
-                {{ indices_table_html }}
+                {{ indices_table_html | safe }}
             </div>
         </div>
     </div>
@@ -112,6 +117,7 @@
     <script>
         const complexesData = {{ complexes_json | safe }};
         const indicesData = {{ indices_json | safe }};
+        const colorMap = {{ color_map_json | safe }};
 
         // 1. Stacked Bar Chart for Complexes
         const complexesSpec = {
@@ -128,8 +134,8 @@
                     "type": "nominal",
                     "title": "Ecological Complex",
                     "scale": {
-                        "domain": ["Red", "Orange", "Extended", "Yellow", "Blue", "Green", "Purple", "Other"],
-                        "range": ["#E41A1C", "#FF7F00", "#984EA3", "#FFFF33", "#377EB8", "#4DAF4A", "#88419D", "#999999"]
+                        "domain": Object.keys(colorMap),
+                        "range": Object.values(colorMap)
                     }
                 },
                 "tooltip": [
