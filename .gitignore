@@ -59,3 +59,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Copyrighted reference articles kept locally (do not commit)
+*.pdf
+sj-docx-*.docx
