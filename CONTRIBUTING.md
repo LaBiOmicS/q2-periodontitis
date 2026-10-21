@@ -41,5 +41,6 @@ Thank you for your interest in contributing to `q2-periodontitis`! We welcome co
 - Code formatting follows PEP 8 standards.
 - Ensure all public functions have descriptive docstrings.
 - PRs will only be merged if all GitHub Actions CI checks pass.
-- Changes to `q2_periodontitis/data/ehomd_map.tsv` must fill the `source` column with `Socransky1998`, a key from `q2_periodontitis/citations.bib`, or `unverified`.
+- Every row of `q2_periodontitis/data/socransky_complexes.tsv` must cite a key of `q2_periodontitis/citations.bib` in `source` and say in `evidence` which sentence, table or figure supports it. Unreferenced entries are not accepted; users can add their own through `--i-custom-mapping`.
+- Changes to indices must cite the publication that defines them, or be documented in `docs/THEORY.md` as plugin-defined, and be re-run on `validation/` with the results updated in `docs/VALIDATION.md`.
 - Record user-visible changes in `CHANGELOG.md`.

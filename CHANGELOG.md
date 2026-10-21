@@ -2,7 +2,69 @@
 
 All notable changes to `q2-periodontitis` are documented in this file.
 
-## [Unreleased] — next version
+## [Unreleased] — scientific revision
+
+Every reported quantity is now either a published index or a documented
+derivation from published complexes. The changes were checked against
+public clinical data (see `docs/VALIDATION.md`).
+
+### ⚠️ Breaking changes
+- **Removed `SWL`, `KRS` and `pMDI_ilr`.** The SWL weights and the KRS
+  threshold and sigmoid had no published basis. `pMDI_ilr` was dominated by
+  the pseudocount when complexes were absent. `--p-keystone-threshold` and
+  `--p-keystone-steepness` were removed.
+- **Removed the "Extended" complex.** It was not part of the Socransky
+  model. The moderate-evidence taxa of Pérez-Chaparro et al. (2014) are now
+  reported separately as `PC2014_moderate` and flagged in the mapping
+  (`PC2014` column).
+- **Species-only reference** (`data/socransky_complexes.tsv` replaces
+  `ehomd_map.tsv`). Only the species of Socransky et al. (1998) and
+  Socransky & Haffajee (2002, Fig. 1 and Fig. 11) are assigned, and each
+  row cites its figure. The only genus-level entry is *Actinomyces*
+  (Blue), which the 2002 figure labels as a genus. Removed: every other
+  genus entry (*Streptococcus*, *Fusobacterium*, *Veillonella*,
+  *Capnocytophaga*, …), the unreferenced species (*S. mutans*, *Rothia*,
+  *Neisseria*, *Corynebacterium*, …) and *A. actinomycetemcomitans*, whose
+  complex depends on a serotype that 16S cannot resolve. Added:
+  *F. periodonticum* and *F. nucleatum* subsp. *vincentii* (Orange,
+  2002 Fig. 11).
+- **`--p-assignment-mode` removed.** Assignment always uses the species,
+  and falls back to the genus only for explicit genus-level entries.
+- **Removed `pMDI` and `--p-pseudocount`.** The index was never
+  published or validated, and in the validation data it was almost
+  redundant with the SMDI (Spearman ρ 0.86–0.90). The SMDI is now the only
+  dysbiosis index. The complex table is unchanged.
+- **`delta-indices`** averages several samples of a unit within a group
+  instead of raising an error, and skips `qc_*` columns.
+- **`summarize`** no longer tests every categorical metadata column. It
+  tests only `--p-group-column`, optionally after averaging per
+  `--p-subject-column`.
+
+### Added
+- **SMDI** (Chen, Marsh & Al-Hebshi 2022), computed exactly as in the
+  original implementation (R *microbiome* 1.6.0 CLR). Both are built in
+  and always computed: `SMDI`, the 49 species with MDG ≥ 0.4 from the
+  authors' Data Set 1, and `SMDI_simplified`, *Fretibacterium* and
+  *Treponema* vs *Actinomyces*. Other signatures can be supplied as the new
+  `DysbiosisSignature` type (`--i-smdi-signature`, column
+  `SMDI_custom`).
+- `PC2014_moderate`: fraction of reads from the 17 moderate-evidence taxa,
+  matched by name or HMT number.
+- Quality-control columns `qc_depth`, `qc_assigned_fraction` and
+  `qc_species_fraction`.
+- Mapping columns `Genus`, `Species` and `PC2014`, and the `ambiguous`
+  resolution for multi-species labels that span complexes.
+- Effect sizes in `summarize` (AUC for two groups, epsilon-squared for
+  more).
+- Parser support for eHOMD labels: `[Eubacterium] nodatum`,
+  `Peptostreptococcaceae [G-6]`, `sp. HMT 360`, subspecies, and 16S
+  clades (`infantis_clade_431`), which are merged into their species.
+  Phylotypes are matched by HMT number.
+- `validation/`: a reproducible re-analysis of SRA SRP075100 (Chen et al.
+  2018) with `docs/VALIDATION.md`.
+- Citations: Chen et al. (2022), Chen et al. (2018).
+
+## [Unreleased] — review corrections
 
 ### ⚠️ Breaking changes
 - **`pMDI_clr` removed.** It was exactly `pMDI_ilr / sqrt(6/5)`. Use `pMDI_ilr`, the canonical compositional balance.

@@ -1,79 +1,201 @@
-# Theoretical & Mathematical Foundations of `q2-periodontitis`
+# Scientific basis of q2-periodontitis
 
-This document outlines the ecological principles and mathematical formulas implemented in `q2-periodontitis`.
+This document states what each output measures, where every number and
+taxon list comes from, and what the plugin cannot do. Every reference
+named here is in `q2_periodontitis/citations.bib`.
 
----
+## 1. Socransky complexes
 
-## 1. Socransky & Extended Microbial Complexes
+### 1.1 What the complexes are
 
-The subgingival biofilm community is structured into ecological complexes reflecting temporal microbial succession (*Socransky et al., 1998*; *Socransky & Haffajee, 2002*):
+Socransky et al. (1998) measured 40 cultivable subgingival species by
+checkerboard DNA-DNA hybridization in 13,261 plaque samples from 185
+adults. They grouped the species by how often they co-occurred, using
+cluster analysis and ordination. Five complexes were consistently
+recovered. The Red complex, *Porphyromonas gingivalis*, *Tannerella
+forsythia* and *Treponema denticola*, was strongly associated with pocket
+depth and bleeding on probing. Socransky & Haffajee (2002, Fig. 1) later
+drew the complexes as a pyramid with the *Actinomyces* species (blue) as a
+sixth group. In that drawing the *Actinomyces*, Yellow, Green and Purple
+groups are early colonizers, Orange is the bridge, and Red is the
+late-stage group.
 
-- **Red Complex:** *Porphyromonas gingivalis*, *Tannerella forsythia*, *Treponema denticola*. Late colonizers associated with tissue breakdown.
-- **Orange Complex:** *Fusobacterium nucleatum* subspecies, *Prevotella intermedia*, *P. nigrescens*, *Parvimonas micra*, *Campylobacter rectus*, *C. showae*, *C. gracilis*, *Eubacterium nodatum*, *Streptococcus constellatus*. Bridge species enabling co-aggregation.
-- **Yellow Complex:** *Streptococcus gordonii*, *S. mitis*, *S. oralis*, *S. sanguinis*, *S. intermedius*. Early colonizers.
-- **Green Complex:** *Capnocytophaga* spp., *Eikenella corrodens*, *Campylobacter concisus*. Early colonizers.
-- **Purple Complex:** *Veillonella parvula* and *Actinomyces odontolyticus* (now *Schaalia odontolytica*). Early colonizers.
-- **Blue Complex:** *Actinomyces* species (*A. naeslundii*, *A. viscosus*, *A. israelii*, *A. gerencseriae*), described by Socransky & Haffajee (2002).
-- **Extended Complex (plugin-defined):** periodontitis-associated taxa identified after 1998 by culture-independent methods, e.g. *Filifactor alocis*, *Fretibacterium* spp., *Treponema lecithinolyticum*, *T. medium*, *Selenomonas sputigena* and *Desulfobulbus* sp. (moderate evidence in Pérez-Chaparro et al., 2014).
+The complexes therefore describe a **fixed panel of 40 species** and how
+they co-occur. They are not a classification of the whole oral microbiome.
 
-Each entry of the built-in reference (`q2_periodontitis/data/ehomd_map.tsv`) records its `source`: `Socransky1998`, a `citations.bib` key, or `unverified` for extensions that still need a supporting reference.
+### 1.2 How the plugin applies them to amplicon data
 
-### 1.1. Taxonomy parsing
+`q2_periodontitis/data/socransky_complexes.tsv` lists every reference
+entry, with its source and the figure or sentence that supports it. The
+rules are:
 
-For each feature, the genus (`g__`) and species (`s__`) ranks are extracted (or ranks 6 and 7 when there are no rank prefixes) and normalized:
+* **Only species from the published panel are assigned.** Membership comes
+  from the 1998 abstract and from Socransky & Haffajee (2002), Fig. 1 (the
+  complexes) and Fig. 11 (the 40-species panel ordered by complex). Current
+  names are used, and historical names are resolved through
+  `synonyms_map.tsv` (*Bacteroides forsythus* → *Tannerella forsythia*,
+  *Peptostreptococcus micros* → *Parvimonas micra*, *Actinomyces
+  odontolyticus* → *Schaalia odontolytica*, *Streptococcus sanguis* → *S.
+  sanguinis*, …).
+* **Genus-level extrapolation is not used**, with one exception. The 2002
+  figure labels the blue group "*Actinomyces* species", without naming
+  species. That is the only genus-level entry: unlisted *Actinomyces*
+  species are assigned to Blue with resolution `genus`. *Schaalia
+  odontolytica* (formerly *A. odontolyticus*) is Purple, following the
+  original assignment.
+* **Taxa the panel cannot represent are left in `Other`:**
+  * *Aggregatibacter actinomycetemcomitans*. Serotype a is in the Green
+    complex and serotype b is an outlier (1998). 16S rRNA genes do not
+    distinguish serotypes.
+  * *Fusobacterium nucleatum* subsp. *animalis*, which was not on the
+    panel. *F. nucleatum* without a subspecies is assigned to Orange,
+    because every subspecies on the panel is Orange.
+  * The unnamed-species probes "*Streptococcus* sp." and "*Capnocytophaga*
+    sp." of Fig. 11. Each probe targets one organism, not a whole genus,
+    and the organism cannot be identified from the figure.
+* **Multi-species labels** such as "*Streptococcus mitis/oralis*" are
+  assigned only when every candidate falls in the same complex. Otherwise
+  the feature is `ambiguous` and goes to `Other`.
 
-1. Placeholder labels (`uncultured*`, `unidentified`, `unclassified`, `metagenome`, `Ambiguous_taxa`, …) are ignored.
-2. Database suffixes on genus names and epithets are removed, matching `_(\d+|[A-Z]{1,2})$` — SILVA (`Prevotella_7`, `Treponema_2`) and GTDB / Greengenes2 (`Fusobacterium_A`, `Prevotella_D`, `nucleatum_D`). Identifiers such as `oral taxon 361` are kept.
-3. An epithet-only species (Greengenes 13_8, `s__gingivalis`) is combined with the genus.
-4. Historical names are replaced through `synonyms_map.tsv` (e.g., *Bacteroides forsythus* → *Tannerella forsythia*).
+### 1.3 Limits you must keep in mind
 
-The original taxonomy string is preserved in the mapping output.
+* **16S resolution.** Short amplicons often cannot separate panel species
+  from close relatives. Examples are *S. mitis* / *S. oralis* /
+  *S. pneumoniae* and several *Campylobacter* and *Capnocytophaga* species.
+  A complex abundance is only as good as the species call behind it. The
+  indices table reports `qc_species_fraction` (reads named to species) and
+  `qc_assigned_fraction` (reads in any complex) for each sample, and the
+  visualization shows them. Read them before interpreting complex
+  profiles.
+* **Different denominators.** Checkerboard data measure 40 species.
+  Amplicon data measure everything. Complex proportions computed by this
+  plugin are fractions of **all** reads, so they are not comparable in
+  absolute value with the checkerboard percentages of the original papers.
+* **Reference database.** Use a classifier trained on an oral reference
+  (eHOMD) whenever possible. Generic databases name fewer oral species and
+  assign more reads to placeholder taxa.
 
-### 1.2. Assignment modes
+## 2. Indices
 
-- `strict`: the species must be in the reference.
-- `genus-majority` (default): uses the species when available; otherwise, the genus-level mapping.
+All indices are computed from **raw read counts**. Do not rarefy, and do
+not supply relative abundances.
 
-Features with a classifier `Confidence` below `min_confidence` are assigned to `Other` (resolution `low-confidence`). Each feature belongs to exactly one complex.
+### 2.1 SMDI (Chen, Marsh & Al-Hebshi 2022)
 
----
+The Subgingival Microbial Dysbiosis Index was derived by random-forest
+selection of species that discriminate periodontitis from health in
+published 16S datasets. It was validated on independent test sets (49
+species: AUC 0.96 training, 0.92 test). It is defined as:
 
-## 2. Mathematical Formulations
+$$\mathrm{SMDI} = \overline{\mathrm{clr}}(\text{dysbiotic taxa}) - \overline{\mathrm{clr}}(\text{normobiotic taxa})$$
 
-Let $y_{i,c}$ be the relative abundance of complex $c$ in sample $i$ ($\sum_c y_{i,c} = 1$, or 0 for an empty sample), $\mathcal{D} = \{\text{Red}, \text{Orange}, \text{Extended}\}$, $\mathcal{H} = \{\text{Yellow}, \text{Blue}\}$, and $\epsilon$ the pseudocount (`pseudocount`, default $10^{-5}$), identical for all samples.
+The plugin reproduces the published computation, which used the R package
+*microbiome* 1.6.0, `transform(x, "clr")`. The source of that version was
+inspected:
 
-### 2.1. Periodontal Microbial Dysbiosis Index ($pMDI$)
-$$pMDI_i = \log_{10} \left( \frac{\sum_{c \in \mathcal{D}} y_{i, c} + \epsilon}{\sum_{c \in \mathcal{H}} y_{i, c} + \epsilon} \right)$$
+1. Counts are aggregated to the signature's taxonomic level (species or
+   genus). Features without a name at that level keep their reads as
+   separate units, so sample totals do not change.
+2. Counts are closed to relative abundances.
+3. One pseudocount, equal to **half the smallest non-zero relative
+   abundance of the whole table**, is added to **every** entry. That is
+   what the code does, although the paper describes the pseudocount as
+   added to zeros.
+4. `clr(x) = ln(x) - mean(ln(x))` is computed over all taxa of the sample.
 
-### 2.2. Compositional balance ($pMDI_{\text{ilr}}$)
-$$pMDI_{\text{ilr}, i} = \sqrt{\frac{6}{5}} \left( \frac{1}{3} \sum_{c \in \mathcal{D}} \ln (y_{i,c} + \epsilon) - \frac{1}{2} \sum_{c \in \mathcal{H}} \ln (y_{i,c} + \epsilon) \right)$$
+Two consequences follow from the original definition.
 
-This is the isometric log-ratio balance between the dysbiotic ($r = 3$) and eubiotic ($s = 2$) parts, with normalizing constant $\sqrt{rs/(r+s)}$. The difference of mean CLR coordinates of the same groups (the former `pMDI_clr`) is identical up to the factor $\sqrt{6/5}$ and is therefore no longer reported.
+* SMDI values depend on the table they are computed in. The pseudocount
+  and the set of taxa in the CLR mean both depend on the other samples and
+  features. Compare SMDI values computed in the same run.
+* Signature taxa absent from the whole table enter as all-zero columns,
+  that is, at the pseudocount. They would appear that way in a table
+  merged with samples that contain them. The plugin warns and lists them.
 
-### 2.3. Socransky Weighted Load ($SWL$)
-$$SWL_i = \sum_{c \in \mathcal{K}} \omega_c \cdot y_{i, c}$$
+**Built-in: `SMDI_simplified`.** The paper also reports a three-genus
+index: *Fretibacterium* and *Treponema* (dysbiotic) against *Actinomyces*
+(normobiotic). Its accuracy was close to the full index (AUC 0.937
+training, 0.930 test), with 0 as the cut-off. It needs only genus-level
+names, so it is the more robust choice when species resolution is poor.
 
-Virulence weights ($\vec{\omega}$):
-Red (1.00), Extended (0.90), Orange (0.60), Green (0.20), Purple (0.10), Yellow (0.00), Blue (0.00), Other (0.00).
+**Built-in: `SMDI` (49 species).** The paper's Appendix Data Set 1 lists
+the 201 discriminating species with their mean decrease in Gini (MDG). It
+is published by the authors on the eHOMD server
+(`homd.org/ftp/publication_data/20210324/Supplementary file 1.xlsx`). The
+SMDI uses the species with MDG ≥ 0.4: exactly 49, of which 31 are
+dysbiotic and 18 normobiotic. They are in `smdi_chen2022_species.tsv`,
+with each original label and MDG value. Labels from the 2021 eHOMD were
+updated to current names:
 
-### 2.4. Keystone Risk Score ($KRS$)
-$$KRS_i = \left( 1 + \tanh\left( \alpha \cdot \frac{y_{i, \text{Red}} - \theta}{\theta} \right) \right) \cdot \left( y_{i, \text{Red}} + y_{i, \text{Extended}} + 0.5 \cdot y_{i, \text{Orange}} \right)$$
+* `Bacteroidaceae [G-1] sp. oral taxon 272` → *Phocaeicola abscessus*
+* *Propionibacterium acnes* → *Cutibacterium acnes*
+* `Veillonella parvula_group` → *V. parvula*
+* `[Eubacterium]` species keep their epithet
 
-Default parameters: $\theta = 0.005$ (0.5%), $\alpha = 1.0$. The sigmoid factor is 1 at $y_{\text{Red}} = \theta$, approaches 2 above the threshold and equals $1 - \tanh(\alpha)$ in the absence of Red complex taxa.
+Unnamed phylotypes are matched by **HMT number**, so `Fretibacterium
+sp. oral taxon 360` matches `Fretibacterium sp. HMT 360` whatever
+placeholder genus a database version uses. eHOMD sub-species "clades"
+(`Streptococcus infantis clade 431`) are merged into their species.
 
-> **Change from earlier versions:** the factor was $1 + \tanh(\alpha\, y_{\text{Red}}/\theta)$, which is already ≥ 1.76 at $y_{\text{Red}} = \theta$ (for $\alpha = 1$), so $\theta$ only rescaled the curve and did not behave as a threshold.
+The authors report a cut-off around 0, with 0.4 the best in training and
+0.5 the best in test. They also report that V4 data shift the index about
+one unit lower than V1–V3.
 
-### 2.5. Longitudinal deltas
-For each subject with exactly one baseline and one target sample: $\Delta X = X_{\text{target}} - X_{\text{baseline}}$ for $X \in \{pMDI, pMDI_{\text{ilr}}, SWL, KRS\}$.
+**Custom signatures.** Any other list (`taxon`, `direction`, `level`) can
+be imported as a `DysbiosisSignature` and passed with
+`--i-smdi-signature`. It is computed with the same method and reported
+as `SMDI_custom`.
 
-### 2.6. Group comparisons in `summarize`
-For each categorical metadata column and index: Mann-Whitney U (two-sided) for two groups or Kruskal-Wallis for more (groups with ≥ 2 samples). All *p*-values in a report are adjusted with the Benjamini-Hochberg procedure; *q* < 0.05 is highlighted.
+### 2.2 PC2014_moderate
 
----
+The fraction of reads from the 17 species and phylotypes with **moderate
+evidence** of association with periodontitis in the systematic review of
+Pérez-Chaparro et al. (2014, Table 3). The list is in
+`perezchaparro2014_moderate.tsv`. Taxa are matched by name, or by Human
+Microbial Taxon (HMT / HOT / "oral taxon") number for unnamed phylotypes
+such as *Fretibacterium* sp. HMT 360 or Bacteroidales [G-2] HMT 274. The
+review also places the phylum Saccharibacteria (TM7) and the domain
+Archaea in this category. They are not species, so they are not counted.
+This is a descriptive measure, not a diagnostic index.
 
-## 3. References
+### 2.3 Removed indices
 
-- Socransky SS, Haffajee AD, Cugini MA, Smith C, Kent RL Jr. Microbial complexes in subgingival plaque. *J Clin Periodontol* 1998;25(2):134–144. doi:10.1111/j.1600-051X.1998.tb02419.x
-- Socransky SS, Haffajee AD. Dental biofilms: difficult therapeutic targets. *Periodontol 2000* 2002;28:12–55. doi:10.1034/j.1600-0757.2002.280102.x
-- Hajishengallis G, Darveau RP, Curtis MA. The keystone-pathogen hypothesis. *Nat Rev Microbiol* 2012;10(10):717–725. doi:10.1038/nrmicro2873
-- Pérez-Chaparro PJ, et al. Newly identified pathogens associated with periodontitis: a systematic review. *J Dent Res* 2014;93(9):846–858. doi:10.1177/0022034514542468
+Earlier versions reported `pMDI_ilr`, the Socransky Weighted Load (SWL)
+and the Keystone Risk Score (KRS). The SWL weights and the KRS threshold
+and sigmoid were not taken from any publication, and the keystone-pathogen
+hypothesis (Hajishengallis et al. 2012) does not imply a threshold on Red
+complex abundance. `pMDI_ilr` took geometric means over complexes that are
+often zero, so its value was driven by the pseudocount. All three were
+removed.
+
+An intermediate version also had a **pMDI**: the log10 ratio of late
+(Red + Orange) to early (Yellow + Green + Purple + Blue) colonizer reads.
+The grouping comes from Socransky & Haffajee (2002), but the index itself
+was never published or validated. In the validation data it was almost
+redundant with the SMDI (Spearman ρ 0.86 with SMDI, 0.90 with
+SMDI_simplified). It was removed, so that the only dysbiosis index is the
+published one. The comparison of early and late colonizers is still
+available from the complex table. Removing it does not change the
+complexes in any way.
+
+## 3. Statistics in `summarize`
+
+* Tests run only on the metadata column you name (`--p-group-column`).
+  Testing every metadata column against every index is a form of data
+  dredging.
+* With `--p-subject-column`, the samples of each subject within a group
+  are averaged before testing. Several sites or visits from one subject
+  are not independent observations, and treating them as such makes the
+  p-values too small.
+* Two groups: Mann-Whitney U, with AUC as the effect size. Three or more
+  groups: Kruskal-Wallis, with epsilon-squared. q-values are
+  Benjamini-Hochberg adjusted across the indices tested.
+* Quality-control columns (`qc_*`) are never tested.
+
+## 4. Deltas
+
+`delta-indices` subtracts baseline from follow-up for every index (not for
+`qc_*` columns) within the unit given by `--p-subject-col`. Use a subject
+column for subject-level change. For site-level change, use a column that
+combines subject and site. Several samples of one unit within a group are
+averaged.
