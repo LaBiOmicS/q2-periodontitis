@@ -82,7 +82,7 @@ plugin.methods.register_function(
         'custom_mapping': SocranskyReference
     },
     parameters={
-        'assignment_mode': Str % Choices(['strict', 'genus-majority', 'probabilistic']),
+        'assignment_mode': Str % Choices(['strict', 'genus-majority']),
         'min_confidence': Float % Range(0, 1, inclusive_end=True),
         'keystone_threshold': Float,
         'keystone_steepness': Float
@@ -100,7 +100,9 @@ plugin.methods.register_function(
                           'and override, the built-in reference map.'
     },
     parameter_descriptions={
-        'assignment_mode': 'Taxonomic assignment mode for resolving genus-level ambiguities.',
+        'assignment_mode': '"strict": only species-level matches are assigned to a complex. '
+                           '"genus-majority": uses the species when available; otherwise, the '
+                           'genus-level mapping.',
         'min_confidence': 'Features whose taxonomy Confidence is below this value are assigned to "Other" '
                           '(Resolution "low-confidence") instead of a complex. Features without a numeric '
                           'Confidence are never filtered. Default 0.0 (no filtering).',

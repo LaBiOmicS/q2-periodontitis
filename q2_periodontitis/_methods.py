@@ -26,6 +26,8 @@ WEIGHTS = {
     "Other": 0.00
 }
 
+ASSIGNMENT_MODES = ["strict", "genus-majority"]
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
@@ -128,15 +130,23 @@ def assign_feature_to_complex(tax_str, lookup, synonyms, assignment_mode="genus-
     """
     Assigns a single taxonomic string to a Socransky / Extended complex.
     `lookup` is the case-insensitive map returned by build_lookup().
+
+    assignment_mode:
+      - "strict": species-level match only;
+      - "genus-majority": uses the species when available; otherwise, the
+        genus-level mapping.
     """
+    if assignment_mode not in ASSIGNMENT_MODES:
+        raise ValueError("assignment_mode must be one of %s, got %r."
+                         % (", ".join(ASSIGNMENT_MODES), assignment_mode))
     genus, species = parse_taxonomy_string(tax_str, synonyms)
 
     # 1. Species level match
     if species and species.lower() in lookup:
         return lookup[species.lower()], "species"
 
-    # 2. Genus level match (if assignment_mode is genus-majority or probabilistic)
-    if assignment_mode in ["genus-majority", "probabilistic"]:
+    # 2. Genus level match (genus-majority only)
+    if assignment_mode == "genus-majority":
         if genus and genus.lower() in lookup:
             return lookup[genus.lower()], "genus"
 
