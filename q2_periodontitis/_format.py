@@ -2,15 +2,41 @@ import qiime2.plugin.model as model
 
 from ._methods import COMPLEXES
 
-class SocranskyComplexesFormat(model.TextFileFormat):
+class NumericTableFormat(model.TextFileFormat):
+    """Tab-separated table: an ID column followed by numeric columns."""
+
     def _validate_(self, level):
+        max_lines = {'min': 100, 'max': None}[level]
         with self.open() as fh:
-            header = fh.readline()
+            header = fh.readline().rstrip('\r\n')
             if not header:
                 raise model.ValidationError("File is empty.")
-            # Verify TSV structure
-            if "\t" not in header and not header.startswith("#"):
-                raise model.ValidationError("Header line must be tab-separated.")
+            columns = header.split('\t')
+            if len(columns) < 2:
+                raise model.ValidationError(
+                    "Header line must be tab-separated with an ID column "
+                    "followed by at least one value column.")
+            for line_no, line in enumerate(fh, start=2):
+                if max_lines is not None and line_no > max_lines + 1:
+                    break
+                line = line.rstrip('\r\n')
+                if not line:
+                    continue
+                fields = line.split('\t')
+                if len(fields) != len(columns):
+                    raise model.ValidationError(
+                        "Line %d has %d fields, expected %d."
+                        % (line_no, len(fields), len(columns)))
+                for value in fields[1:]:
+                    try:
+                        float(value)
+                    except ValueError:
+                        raise model.ValidationError(
+                            "Line %d: non-numeric value %r." % (line_no, value))
+
+
+class SocranskyComplexesFormat(NumericTableFormat):
+    pass
 
 SocranskyComplexesDirectoryFormat = model.SingleFileDirectoryFormat(
     'SocranskyComplexesDirectoryFormat',
@@ -18,19 +44,23 @@ SocranskyComplexesDirectoryFormat = model.SingleFileDirectoryFormat(
     SocranskyComplexesFormat
 )
 
-class PeriodontalIndicesFormat(model.TextFileFormat):
-    def _validate_(self, level):
-        with self.open() as fh:
-            header = fh.readline()
-            if not header:
-                raise model.ValidationError("File is empty.")
-            if "\t" not in header:
-                raise model.ValidationError("Header line must be tab-separated.")
+class PeriodontalIndicesFormat(NumericTableFormat):
+    pass
 
 PeriodontalIndicesDirectoryFormat = model.SingleFileDirectoryFormat(
     'PeriodontalIndicesDirectoryFormat',
     'indices.tsv',
     PeriodontalIndicesFormat
+)
+
+class PeriodontalIndicesDeltaFormat(NumericTableFormat):
+    """Per-subject deltas; the first column (``subject-id``) holds subject IDs."""
+    pass
+
+PeriodontalIndicesDeltaDirectoryFormat = model.SingleFileDirectoryFormat(
+    'PeriodontalIndicesDeltaDirectoryFormat',
+    'deltas.tsv',
+    PeriodontalIndicesDeltaFormat
 )
 
 class SocranskyMappingFormat(model.TextFileFormat):

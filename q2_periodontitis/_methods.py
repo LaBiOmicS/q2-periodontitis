@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import biom
+import qiime2
 
 COMPLEXES = [
     "Red",
@@ -292,50 +293,75 @@ def compute_indices(complexes, pseudocount=1e-5, keystone_threshold=0.005,
     }, index=complexes.index)
 
 
+def _normalize_label(value):
+    """String form of a metadata value; integral floats lose their '.0'
+    so numeric time points (e.g. 0.0) match labels such as '0'."""
+    if isinstance(value, (float, np.floating)) and float(value).is_integer():
+        return str(int(value))
+    return str(value)
+
+
 def delta_indices(
     indices: pd.DataFrame,
-    metadata: object,
-    sample_id_col: str,
+    metadata: qiime2.Metadata,
+    subject_col: str,
     group_col: str,
     baseline_group: str,
     target_group: str
 ) -> pd.DataFrame:
     """
-    Computes longitudinal delta (Pre vs Post treatment) for pMDI, SWL, KRS.
+    Computes paired longitudinal deltas (target minus baseline) of every
+    index in `indices`, one row per subject. The output index is the subject
+    ID taken from `subject_col`.
     """
-    if hasattr(metadata, "to_dataframe"):
-        metadata_df = metadata.to_dataframe()
-    else:
-        metadata_df = metadata
+    metadata_df = metadata.to_dataframe()
+    missing = [c for c in (subject_col, group_col) if c not in metadata_df.columns]
+    if missing:
+        raise ValueError("Metadata column(s) not found: %s." % ", ".join(missing))
 
-    merged = indices.join(metadata_df, how="inner")
-    if sample_id_col not in merged.columns or group_col not in merged.columns:
-        raise ValueError(f"Columns '{sample_id_col}' and '{group_col}' must be present in metadata.")
+    # Join only the two needed columns, under private names, to avoid any
+    # collision with index or metadata column names.
+    design = pd.DataFrame({
+        "__subject__": metadata_df[subject_col],
+        "__group__": metadata_df[group_col],
+    }).dropna()
+    design["__subject__"] = design["__subject__"].map(_normalize_label)
+    design["__group__"] = design["__group__"].map(_normalize_label)
 
-    deltas = []
-    grouped = merged.groupby(sample_id_col)
+    baseline_label = str(baseline_group)
+    target_label = str(target_group)
+    if metadata.columns[group_col].type == "numeric":
+        # Let "1" match a numeric column value of 1.0
+        try:
+            baseline_label = _normalize_label(float(baseline_group))
+            target_label = _normalize_label(float(target_group))
+        except ValueError:
+            raise ValueError(
+                "Column '%s' is numeric, so baseline_group and target_group "
+                "must be numbers (got %r and %r)."
+                % (group_col, baseline_group, target_group)) from None
 
-    for subject_id, group_df in grouped:
-        baseline = group_df[group_df[group_col] == baseline_group]
-        target = group_df[group_df[group_col] == target_group]
+    metrics = list(indices.columns)
+    merged = indices.join(design, how="inner")
+    merged = merged[merged["__group__"].isin([baseline_label, target_label])]
 
-        if not baseline.empty and not target.empty:
-            b_row = baseline.iloc[0]
-            t_row = target.iloc[0]
-            deltas.append({
-                "Subject_ID": subject_id,
-                "pMDI": t_row["pMDI"] - b_row["pMDI"],
-                "pMDI_ilr": t_row["pMDI_ilr"] - b_row["pMDI_ilr"],
-                "SWL": t_row["SWL"] - b_row["SWL"],
-                "KRS": t_row["KRS"] - b_row["KRS"]
-            })
+    counts = merged.groupby(["__subject__", "__group__"]).size()
+    duplicated = sorted(set(counts[counts > 1].index.get_level_values(0)))
+    if duplicated:
+        raise ValueError(
+            "More than one sample per subject and group for subject(s): %s. "
+            "Each subject must have at most one '%s' and one '%s' sample."
+            % (", ".join(duplicated), baseline_group, target_group))
 
-    if not deltas:
-        df_res = pd.DataFrame(columns=["pMDI", "pMDI_ilr", "SWL", "KRS"])
-        df_res.index.name = "sample-id"
-        return df_res
+    baseline = merged[merged["__group__"] == baseline_label].set_index("__subject__")[metrics]
+    target = merged[merged["__group__"] == target_label].set_index("__subject__")[metrics]
+    paired = baseline.index.intersection(target.index)
+    if len(paired) == 0:
+        raise ValueError(
+            "No subject in '%s' has samples in both groups '%s' and '%s' of "
+            "column '%s'." % (subject_col, baseline_group, target_group, group_col))
 
-    df_res = pd.DataFrame(deltas).set_index("Subject_ID")
-    df_res.index.name = "sample-id"
+    df_res = target.loc[paired] - baseline.loc[paired]
+    df_res = df_res.sort_index()
+    df_res.index.name = "subject-id"
     return df_res
-

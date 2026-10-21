@@ -9,16 +9,19 @@ from qiime2.plugin import (
 )
 from q2_types.feature_table import FeatureTable, Frequency
 from q2_types.feature_data import FeatureData, Taxonomy
+from q2_types.sample_data import SampleData
 from ._version import __version__
 from ._type import (
     SocranskyComplexes,
     PeriodontalIndices,
+    PeriodontalIndicesDelta,
     SocranskyMapping,
     SocranskyReference
 )
 from ._format import (
     SocranskyComplexesDirectoryFormat,
     PeriodontalIndicesDirectoryFormat,
+    PeriodontalIndicesDeltaDirectoryFormat,
     SocranskyMappingDirectoryFormat,
     SocranskyReferenceDirectoryFormat
 )
@@ -41,6 +44,7 @@ plugin = Plugin(
 plugin.register_formats(
     SocranskyComplexesDirectoryFormat,
     PeriodontalIndicesDirectoryFormat,
+    PeriodontalIndicesDeltaDirectoryFormat,
     SocranskyMappingDirectoryFormat,
     SocranskyReferenceDirectoryFormat
 )
@@ -48,6 +52,7 @@ plugin.register_formats(
 plugin.register_semantic_types(
     SocranskyComplexes,
     PeriodontalIndices,
+    PeriodontalIndicesDelta,
     SocranskyMapping,
     SocranskyReference
 )
@@ -61,6 +66,11 @@ plugin.register_semantic_type_to_format(
 plugin.register_semantic_type_to_format(
     PeriodontalIndices,
     artifact_format=PeriodontalIndicesDirectoryFormat
+)
+
+plugin.register_semantic_type_to_format(
+    SampleData[PeriodontalIndicesDelta],
+    artifact_format=PeriodontalIndicesDeltaDirectoryFormat
 )
 
 plugin.register_semantic_type_to_format(
@@ -130,29 +140,33 @@ plugin.methods.register_function(
     },
     parameters={
         'metadata': Metadata,
-        'sample_id_col': Str,
+        'subject_col': Str,
         'group_col': Str,
         'baseline_group': Str,
         'target_group': Str
     },
     outputs=[
-        ('delta_table', PeriodontalIndices)
+        ('delta_table', SampleData[PeriodontalIndicesDelta])
     ],
     input_descriptions={
         'indices': 'Calculated dysbiosis indices table.'
     },
     parameter_descriptions={
         'metadata': 'Sample metadata containing subject IDs and treatment groups.',
-        'sample_id_col': 'Metadata column containing subject/patient identifiers.',
+        'subject_col': 'Metadata column containing subject/patient identifiers.',
         'group_col': 'Metadata column containing treatment/time-point group identifiers.',
         'baseline_group': 'Baseline group name (e.g. Pre-treatment / Baseline).',
         'target_group': 'Target group name (e.g. Post-treatment / Follow-up).'
     },
     output_descriptions={
-        'delta_table': 'Table of longitudinal deltas (Target minus Baseline) for pMDI, SWL, KRS.'
+        'delta_table': 'Per-subject deltas (target minus baseline) of every index in the input '
+                       '(pMDI, pMDI_ilr, SWL, KRS). The table is indexed by subject ID (subject-id), '
+                       'not by sample ID.'
     },
     name='Longitudinal Treatment Delta Calculation',
-    description='Calculates paired subject deltas for dysbiosis metrics between baseline and follow-up groups.'
+    description='Calculates paired subject deltas for dysbiosis metrics between baseline and follow-up groups. '
+                'Each subject must have exactly one baseline and one target sample to be paired; duplicated '
+                'subject/group combinations, or the absence of any paired subject, raise an error.'
 )
 
 # Register Visualizers

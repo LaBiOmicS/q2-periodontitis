@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 import biom
+import qiime2
 from q2_periodontitis._methods import (
     parse_taxonomy_string,
     assign_feature_to_complex,
@@ -109,14 +110,14 @@ class TestMethods(unittest.TestCase):
             "KRS": [0.9, 0.1]
         }, index=["S1_Pre", "S1_Post"])
 
-        metadata = pd.DataFrame({
+        metadata = qiime2.Metadata(pd.DataFrame({
             "Subject_ID": ["Pat1", "Pat1"],
             "TimePoint": ["Pre", "Post"]
-        }, index=["S1_Pre", "S1_Post"])
+        }, index=pd.Index(["S1_Pre", "S1_Post"], name="id")))
 
         df_delta = delta_indices(
             indices, metadata,
-            sample_id_col="Subject_ID",
+            subject_col="Subject_ID",
             group_col="TimePoint",
             baseline_group="Pre",
             target_group="Post"

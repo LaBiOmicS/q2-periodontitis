@@ -12,6 +12,12 @@ PeriodontalIndices = SemanticType(
     variant_of=SampleData.field['type']
 )
 
+# Paired deltas (target - baseline); rows are subjects, not samples
+PeriodontalIndicesDelta = SemanticType(
+    'PeriodontalIndicesDelta',
+    variant_of=SampleData.field['type']
+)
+
 SocranskyMapping = SemanticType(
     'SocranskyMapping',
     variant_of=FeatureData.field['type']

@@ -5,6 +5,7 @@ from .plugin_setup import plugin
 from ._format import (
     SocranskyComplexesFormat,
     PeriodontalIndicesFormat,
+    PeriodontalIndicesDeltaFormat,
     SocranskyMappingFormat,
     SocranskyReferenceFormat,
 )
@@ -78,3 +79,26 @@ def _12(df: pd.DataFrame) -> SocranskyReferenceFormat:
     with format.open() as fh:
         df.to_csv(fh, sep='\t', index=False)
     return format
+
+@plugin.register_transformer
+def _13(format: PeriodontalIndicesDeltaFormat) -> pd.DataFrame:
+    with format.open() as fh:
+        df = pd.read_csv(fh, sep='\t', index_col=0, dtype={0: str})
+    df.index = df.index.astype(str)
+    df.index.name = 'subject-id'
+    return df
+
+@plugin.register_transformer
+def _14(df: pd.DataFrame) -> PeriodontalIndicesDeltaFormat:
+    format = PeriodontalIndicesDeltaFormat()
+    with format.open() as fh:
+        df.to_csv(fh, sep='\t', index_label='subject-id')
+    return format
+
+@plugin.register_transformer
+def _15(format: PeriodontalIndicesDeltaFormat) -> qiime2.Metadata:
+    with format.open() as fh:
+        df = pd.read_csv(fh, sep='\t', index_col=0, dtype={0: str})
+    # QIIME 2 Metadata only accepts its own ID header names
+    df.index.name = 'id'
+    return qiime2.Metadata(df)
