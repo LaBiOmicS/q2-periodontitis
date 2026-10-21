@@ -10,11 +10,17 @@ from qiime2.plugin import (
 from q2_types.feature_table import FeatureTable, Frequency
 from q2_types.feature_data import FeatureData, Taxonomy
 from ._version import __version__
-from ._type import SocranskyComplexes, PeriodontalIndices, SocranskyMapping
+from ._type import (
+    SocranskyComplexes,
+    PeriodontalIndices,
+    SocranskyMapping,
+    SocranskyReference
+)
 from ._format import (
     SocranskyComplexesDirectoryFormat,
     PeriodontalIndicesDirectoryFormat,
-    SocranskyMappingDirectoryFormat
+    SocranskyMappingDirectoryFormat,
+    SocranskyReferenceDirectoryFormat
 )
 from ._methods import collapse_complexes, delta_indices
 from ._visualizer import summarize
@@ -35,7 +41,15 @@ plugin = Plugin(
 plugin.register_formats(
     SocranskyComplexesDirectoryFormat,
     PeriodontalIndicesDirectoryFormat,
-    SocranskyMappingDirectoryFormat
+    SocranskyMappingDirectoryFormat,
+    SocranskyReferenceDirectoryFormat
+)
+
+plugin.register_semantic_types(
+    SocranskyComplexes,
+    PeriodontalIndices,
+    SocranskyMapping,
+    SocranskyReference
 )
 
 # Register Semantic Type to Format Mappings
@@ -54,13 +68,18 @@ plugin.register_semantic_type_to_format(
     artifact_format=SocranskyMappingDirectoryFormat
 )
 
+plugin.register_semantic_type_to_format(
+    SocranskyReference,
+    artifact_format=SocranskyReferenceDirectoryFormat
+)
+
 # Register Methods
 plugin.methods.register_function(
     function=collapse_complexes,
     inputs={
         'table': FeatureTable[Frequency],
         'taxonomy': FeatureData[Taxonomy],
-        'custom_mapping': FeatureData[SocranskyMapping]
+        'custom_mapping': SocranskyReference
     },
     parameters={
         'assignment_mode': Str % Choices(['strict', 'genus-majority', 'probabilistic']),
@@ -76,7 +95,9 @@ plugin.methods.register_function(
     input_descriptions={
         'table': 'Feature table of ASV/OTU counts.',
         'taxonomy': 'Taxonomic classifications for features.',
-        'custom_mapping': 'Optional custom taxonomy-to-complex mapping table.'
+        'custom_mapping': 'Optional taxon-to-complex reference table (SocranskyReference: TSV with a '
+                          'header containing the columns "taxon" and "complex"). Entries are added to, '
+                          'and override, the built-in reference map.'
     },
     parameter_descriptions={
         'assignment_mode': 'Taxonomic assignment mode for resolving genus-level ambiguities.',

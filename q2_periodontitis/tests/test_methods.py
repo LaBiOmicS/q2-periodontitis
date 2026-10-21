@@ -5,6 +5,7 @@ import biom
 from q2_periodontitis._methods import (
     parse_taxonomy_string,
     assign_feature_to_complex,
+    build_lookup,
     collapse_complexes,
     delta_indices
 )
@@ -35,7 +36,7 @@ class TestMethods(unittest.TestCase):
     def test_assign_feature_to_complex_species(self):
         complex_name, res = assign_feature_to_complex(
             "d__Bacteria;...;g__Porphyromonas;s__Porphyromonas_gingivalis",
-            self.tax_map,
+            build_lookup(self.tax_map),
             self.synonyms,
             assignment_mode="strict"
         )
@@ -45,7 +46,7 @@ class TestMethods(unittest.TestCase):
     def test_assign_feature_to_complex_genus_majority(self):
         complex_name, res = assign_feature_to_complex(
             "d__Bacteria;...;g__Porphyromonas;s__uncultured",
-            self.tax_map,
+            build_lookup(self.tax_map),
             self.synonyms,
             assignment_mode="genus-majority"
         )

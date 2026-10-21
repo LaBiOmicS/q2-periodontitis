@@ -16,3 +16,6 @@ SocranskyMapping = SemanticType(
     'SocranskyMapping',
     variant_of=FeatureData.field['type']
 )
+
+# User-supplied taxon -> complex reference table (not tied to feature IDs)
+SocranskyReference = SemanticType('SocranskyReference')

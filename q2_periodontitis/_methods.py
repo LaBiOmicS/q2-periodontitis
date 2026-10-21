@@ -107,23 +107,38 @@ def parse_taxonomy_string(tax_str, synonyms=None):
     return genus, species_full
 
 
-def assign_feature_to_complex(tax_str, tax_map, synonyms, assignment_mode="genus-majority"):
+def build_lookup(tax_map):
+    """
+    Validates a taxon -> complex map and returns a case-insensitive lookup
+    (lower-cased taxon -> complex). Raises ValueError on unknown complexes.
+    """
+    invalid = sorted({c for c in tax_map.values() if c not in COMPLEXES})
+    if invalid:
+        offenders = sorted(t for t, c in tax_map.items() if c in invalid)
+        raise ValueError(
+            "Invalid complex name(s) %s (taxa: %s). Valid complexes are: %s."
+            % (", ".join(repr(c) for c in invalid),
+               ", ".join(offenders[:10]) + (" ..." if len(offenders) > 10 else ""),
+               ", ".join(COMPLEXES))
+        )
+    return {k.lower(): v for k, v in tax_map.items()}
+
+
+def assign_feature_to_complex(tax_str, lookup, synonyms, assignment_mode="genus-majority"):
     """
     Assigns a single taxonomic string to a Socransky / Extended complex.
+    `lookup` is the case-insensitive map returned by build_lookup().
     """
     genus, species = parse_taxonomy_string(tax_str, synonyms)
 
-    # Build case-insensitive lookup map
-    lower_tax_map = {k.lower(): v for k, v in tax_map.items()}
-
     # 1. Species level match
-    if species and species.lower() in lower_tax_map:
-        return lower_tax_map[species.lower()], "species"
+    if species and species.lower() in lookup:
+        return lookup[species.lower()], "species"
 
     # 2. Genus level match (if assignment_mode is genus-majority or probabilistic)
     if assignment_mode in ["genus-majority", "probabilistic"]:
-        if genus and genus.lower() in lower_tax_map:
-            return lower_tax_map[genus.lower()], "genus"
+        if genus and genus.lower() in lookup:
+            return lookup[genus.lower()], "genus"
 
     return "Other", "unassigned"
 
@@ -143,11 +158,15 @@ def collapse_complexes(
     tax_map, synonyms = load_default_mappings()
 
     if custom_mapping is not None and not custom_mapping.empty:
-        if isinstance(custom_mapping, pd.DataFrame):
-            for _, row in custom_mapping.iterrows():
-                t_name = str(row.iloc[0]).strip()
-                c_name = str(row.iloc[1]).strip()
-                tax_map[t_name] = c_name
+        missing = [c for c in ("taxon", "complex") if c not in custom_mapping.columns]
+        if missing:
+            raise ValueError(
+                "custom_mapping must have the columns 'taxon' and 'complex'; "
+                "missing: %s." % ", ".join(missing))
+        for t_name, c_name in zip(custom_mapping["taxon"], custom_mapping["complex"]):
+            tax_map[str(t_name).strip()] = str(c_name).strip()
+
+    lookup = build_lookup(tax_map)
 
     # Taxonomy arrives as the q2-types DataFrame (Taxon + optional Confidence)
     if isinstance(taxonomy, pd.Series):
@@ -188,7 +207,7 @@ def collapse_complexes(
             complex_name, resolution = "Other", "low-confidence"
         else:
             complex_name, resolution = assign_feature_to_complex(
-                tax_str, tax_map, synonyms, assignment_mode
+                tax_str, lookup, synonyms, assignment_mode
             )
         c_idx = COMPLEXES.index(complex_name)
         w_matrix[idx, c_idx] = 1.0

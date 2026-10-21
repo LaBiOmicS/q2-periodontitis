@@ -6,6 +6,7 @@ from ._format import (
     SocranskyComplexesFormat,
     PeriodontalIndicesFormat,
     SocranskyMappingFormat,
+    SocranskyReferenceFormat,
 )
 
 @plugin.register_transformer
@@ -61,3 +62,19 @@ def _10(format: SocranskyMappingFormat) -> qiime2.Metadata:
     with format.open() as fh:
         return qiime2.Metadata(pd.read_csv(fh, sep='\t', index_col=0))
 
+
+@plugin.register_transformer
+def _11(format: SocranskyReferenceFormat) -> pd.DataFrame:
+    with format.open() as fh:
+        df = pd.read_csv(fh, sep='\t', dtype=str, skip_blank_lines=True)
+    df.columns = [c.strip() for c in df.columns]
+    for col in ('taxon', 'complex'):
+        df[col] = df[col].str.strip()
+    return df
+
+@plugin.register_transformer
+def _12(df: pd.DataFrame) -> SocranskyReferenceFormat:
+    format = SocranskyReferenceFormat()
+    with format.open() as fh:
+        df.to_csv(fh, sep='\t', index=False)
+    return format
