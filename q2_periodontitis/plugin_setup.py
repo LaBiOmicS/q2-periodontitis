@@ -84,7 +84,8 @@ plugin.methods.register_function(
     parameters={
         'assignment_mode': Str % Choices(['strict', 'genus-majority']),
         'min_confidence': Float % Range(0, 1, inclusive_end=True),
-        'keystone_threshold': Float,
+        'pseudocount': Float % Range(0, None, inclusive_start=False),
+        'keystone_threshold': Float % Range(0, None, inclusive_start=False),
         'keystone_steepness': Float
     },
     outputs=[
@@ -106,12 +107,16 @@ plugin.methods.register_function(
         'min_confidence': 'Features whose taxonomy Confidence is below this value are assigned to "Other" '
                           '(Resolution "low-confidence") instead of a complex. Features without a numeric '
                           'Confidence are never filtered. Default 0.0 (no filtering).',
-        'keystone_threshold': 'Critical abundance threshold (theta) for Red complex keystone pathogens (default: 0.005).',
-        'keystone_steepness': 'Steepness factor (alpha) for the sigmoidal Keystone Risk Score (default: 1.0).'
+        'pseudocount': 'Pseudocount added to every complex relative abundance (same value for all samples) '
+                       'before the log-ratios of pMDI and pMDI_ilr are taken (default: 1e-5).',
+        'keystone_threshold': 'Critical Red complex relative abundance (theta) at which the Keystone Risk Score '
+                              'sigmoid is centred (default: 0.005).',
+        'keystone_steepness': 'Steepness factor (alpha) of the KRS sigmoid tanh(alpha * (Red - theta) / theta) '
+                              '(default: 1.0).'
     },
     output_descriptions={
         'complex_table': 'Collapsed Socransky & Extended complexes relative abundance matrix.',
-        'indices': 'Calculated dysbiosis indices (pMDI, pMDI_clr, SWL, KRS).',
+        'indices': 'Calculated dysbiosis indices (pMDI, pMDI_ilr, SWL, KRS).',
         'mapping': 'Feature ID to Socransky complex mapping table.'
     },
     name='Collapse ASVs into Socransky Complexes & Compute Dysbiosis Indices',

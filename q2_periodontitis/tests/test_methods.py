@@ -73,7 +73,6 @@ class TestMethods(unittest.TestCase):
 
         self.assertIn("Red", df_complexes.columns)
         self.assertIn("pMDI", df_indices.columns)
-        self.assertIn("pMDI_clr", df_indices.columns)
         self.assertIn("pMDI_ilr", df_indices.columns)
         self.assertIn("SWL", df_indices.columns)
         self.assertIn("KRS", df_indices.columns)
@@ -105,7 +104,7 @@ class TestMethods(unittest.TestCase):
     def test_delta_indices(self):
         indices = pd.DataFrame({
             "pMDI": [1.5, -0.2],
-            "pMDI_clr": [1.2, -0.1],
+            "pMDI_ilr": [1.2, -0.1],
             "SWL": [0.8, 0.2],
             "KRS": [0.9, 0.1]
         }, index=["S1_Pre", "S1_Post"])

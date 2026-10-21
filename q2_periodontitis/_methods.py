@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 import biom
-from scipy.stats import gmean
 
 COMPLEXES = [
     "Red",
@@ -27,6 +26,9 @@ WEIGHTS = {
 }
 
 ASSIGNMENT_MODES = ["strict", "genus-majority"]
+
+DYSBIOTIC = ["Red", "Orange", "Extended"]
+EUBIOTIC = ["Yellow", "Blue"]
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -159,12 +161,15 @@ def collapse_complexes(
     assignment_mode: str = "genus-majority",
     custom_mapping: pd.DataFrame = None,
     min_confidence: float = 0.0,
+    pseudocount: float = 1e-5,
     keystone_threshold: float = 0.005,
     keystone_steepness: float = 1.0
 ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
     Collapses ASV/OTU feature table into Socransky complexes and computes dysbiosis metrics.
     """
+    if not 0.0 <= min_confidence <= 1.0:
+        raise ValueError("min_confidence must be within [0, 1].")
     tax_map, synonyms = load_default_mappings()
 
     if custom_mapping is not None and not custom_mapping.empty:
@@ -192,14 +197,6 @@ def collapse_complexes(
 
     sample_ids = list(table.ids(axis="sample"))
     feature_ids = list(table.ids(axis="observation"))
-
-    # Convert biom table to matrix: features x samples
-    matrix = table.matrix_data.toarray()  # (M x N)
-
-    # Relative abundance matrix P: samples x features
-    col_sums = matrix.sum(axis=0)
-    col_sums[col_sums == 0] = 1.0  # Prevent division by zero
-    rel_abundance = (matrix / col_sums).T  # (N x M)
 
     # Map each feature to exactly one complex. Features whose classifier
     # confidence is below min_confidence are sent to "Other" so that each
@@ -229,74 +226,70 @@ def collapse_complexes(
             "Confidence": confidence
         })
 
-    # Collapsed complexes matrix Y = P x W (N x K)
-    collapsed_matrix = rel_abundance @ w_matrix
+    # Collapsed complexes matrix Y = P W (N x K), computed sparsely as
+    # (X^T W) / depth so the feature table is never densified.
+    counts = table.matrix_data  # sparse (M x N)
+    depth = np.asarray(counts.sum(axis=0)).ravel()
+    depth[depth == 0] = 1.0  # Empty samples keep an all-zero profile
+    collapsed_matrix = np.asarray(counts.T @ w_matrix) / depth[:, None]
     df_complexes = pd.DataFrame(
         collapsed_matrix,
         index=sample_ids,
         columns=COMPLEXES
     )
 
-    # Compute Dysbiosis Indices (pMDI, pMDI_clr, pMDI_ilr, SWL, KRS)
-    dysbiotic = df_complexes["Red"] + df_complexes["Orange"] + df_complexes["Extended"]
-    health = df_complexes["Yellow"] + df_complexes["Blue"]
-
-    pMDI_vals = []
-    pMDI_clr_vals = []
-    pMDI_ilr_vals = []
-    SWL_vals = []
-    KRS_vals = []
-
-    # ILR scaling factor: sqrt( (3 * 2) / (3 + 2) ) = sqrt(6 / 5)
-    ilr_factor = np.sqrt(6.0 / 5.0)
-
-    for i in range(len(sample_ids)):
-        row = df_complexes.iloc[i]
-        d_val = dysbiotic.iloc[i]
-        h_val = health.iloc[i]
-
-        # Dynamic pseudocount epsilon_i
-        non_zero = row[row > 0]
-        epsilon_i = (non_zero.min() / 2.0) if len(non_zero) > 0 else 1e-5
-
-        # Standard pMDI
-        pmdi = np.log10((d_val + epsilon_i) / (h_val + epsilon_i))
-        pMDI_vals.append(pmdi)
-
-        # pMDI_clr (Centered Log-Ratio)
-        row_eps = row + epsilon_i
-        g_mean = np.exp(np.mean(np.log(row_eps)))
-        clr_row = np.log(row_eps / g_mean)
-        clr_d = np.mean([clr_row["Red"], clr_row["Orange"], clr_row["Extended"]])
-        clr_h = np.mean([clr_row["Yellow"], clr_row["Blue"]])
-        pMDI_clr_vals.append(clr_d - clr_h)
-
-        # pMDI_ilr (Isometric Log-Ratio Balance)
-        d_gmean = np.exp(np.mean(np.log([row["Red"] + epsilon_i, row["Orange"] + epsilon_i, row["Extended"] + epsilon_i])))
-        h_gmean = np.exp(np.mean(np.log([row["Yellow"] + epsilon_i, row["Blue"] + epsilon_i])))
-        ilr_val = ilr_factor * np.log(d_gmean / h_gmean)
-        pMDI_ilr_vals.append(ilr_val)
-
-        # SWL (Socransky Weighted Load)
-        swl = sum(WEIGHTS[c] * row[c] for c in COMPLEXES)
-        SWL_vals.append(swl)
-
-        # KRS (Keystone Risk Score)
-        red_val = row["Red"]
-        krs = (1.0 + np.tanh(keystone_steepness * (red_val / keystone_threshold))) * (red_val + row["Extended"] + 0.5 * row["Orange"])
-        KRS_vals.append(krs)
-
-    df_indices = pd.DataFrame({
-        "pMDI": pMDI_vals,
-        "pMDI_clr": pMDI_clr_vals,
-        "pMDI_ilr": pMDI_ilr_vals,
-        "SWL": SWL_vals,
-        "KRS": KRS_vals
-    }, index=sample_ids)
+    df_indices = compute_indices(
+        df_complexes, pseudocount, keystone_threshold, keystone_steepness
+    )
 
     df_mapping = pd.DataFrame(feature_assignments).set_index("Feature ID")
 
     return df_complexes, df_indices, df_mapping
+
+
+def compute_indices(complexes, pseudocount=1e-5, keystone_threshold=0.005,
+                    keystone_steepness=1.0):
+    """
+    Computes pMDI, pMDI_ilr, SWL and KRS from a samples x complexes table of
+    relative abundances. `pseudocount` is added to every complex abundance of
+    every sample (relative-abundance scale) before taking logs.
+    """
+    if pseudocount <= 0:
+        raise ValueError("pseudocount must be > 0.")
+    if keystone_threshold <= 0:
+        raise ValueError("keystone_threshold must be > 0.")
+
+    y = complexes
+    dysbiotic = y[DYSBIOTIC].sum(axis=1)
+    health = y[EUBIOTIC].sum(axis=1)
+
+    # pMDI: log10 ratio of dysbiotic vs eubiotic complex totals
+    pmdi = np.log10((dysbiotic + pseudocount) / (health + pseudocount))
+
+    # pMDI_ilr: isometric log-ratio balance between the geometric means of
+    # the dysbiotic (r=3) and eubiotic (s=2) parts; sqrt(r*s/(r+s)) = sqrt(6/5)
+    log_y = np.log(y[DYSBIOTIC + EUBIOTIC] + pseudocount)
+    ilr_factor = np.sqrt(len(DYSBIOTIC) * len(EUBIOTIC)
+                         / (len(DYSBIOTIC) + len(EUBIOTIC)))
+    pmdi_ilr = ilr_factor * (log_y[DYSBIOTIC].mean(axis=1)
+                             - log_y[EUBIOTIC].mean(axis=1))
+
+    # SWL: virulence-weighted load
+    swl = y[COMPLEXES] @ pd.Series(WEIGHTS)[COMPLEXES]
+
+    # KRS: sigmoid centred on the keystone threshold theta, so the penalty
+    # factor is 1 at Red == theta, -> 2 above it and -> 1 - tanh(alpha) at 0.
+    red = y["Red"]
+    sigmoid = 1.0 + np.tanh(keystone_steepness
+                            * (red - keystone_threshold) / keystone_threshold)
+    krs = sigmoid * (red + y["Extended"] + 0.5 * y["Orange"])
+
+    return pd.DataFrame({
+        "pMDI": pmdi,
+        "pMDI_ilr": pmdi_ilr,
+        "SWL": swl,
+        "KRS": krs
+    }, index=complexes.index)
 
 
 def delta_indices(
@@ -332,13 +325,13 @@ def delta_indices(
             deltas.append({
                 "Subject_ID": subject_id,
                 "pMDI": t_row["pMDI"] - b_row["pMDI"],
-                "pMDI_clr": t_row["pMDI_clr"] - b_row["pMDI_clr"],
+                "pMDI_ilr": t_row["pMDI_ilr"] - b_row["pMDI_ilr"],
                 "SWL": t_row["SWL"] - b_row["SWL"],
                 "KRS": t_row["KRS"] - b_row["KRS"]
             })
 
     if not deltas:
-        df_res = pd.DataFrame(columns=["pMDI", "pMDI_clr", "SWL", "KRS"])
+        df_res = pd.DataFrame(columns=["pMDI", "pMDI_ilr", "SWL", "KRS"])
         df_res.index.name = "sample-id"
         return df_res
 
