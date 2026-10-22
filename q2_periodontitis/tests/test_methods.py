@@ -445,6 +445,23 @@ class TestCollapseComplexes(CollapseFixture):
         self.assertAlmostEqual(complexes.loc["S1", "Other"], 0.3)
         np.testing.assert_allclose(complexes.sum(axis=1).values, [1, 1, 1, 0])
 
+    def test_min_confidence_applies_to_smdi(self):
+        conf = {"F0": 0.5, "F1": 0.95, "F2": 0.95, "F3": 0.95, "F4": 0.95,
+                "F5": 0.95}
+        sig = pd.DataFrame({"taxon": ["Porphyromonas gingivalis",
+                                      "Streptococcus gordonii"],
+                            "direction": ["dysbiotic", "normobiotic"],
+                            "level": ["species", "species"]})
+        _, indices, _ = collapse_complexes(self.table,
+                                           _taxonomy(self.TAXA, conf),
+                                           smdi_signature=sig,
+                                           min_confidence=0.7)
+        # F0 is low-confidence: P. gingivalis enters at the pseudocount,
+        # while its reads stay in the table (the pseudocount is unchanged).
+        pc = self.PC
+        self.assertAlmostEqual(indices.loc["S1", "SMDI_custom"],
+                               math.log(pc / (0.3 + pc)), places=12)
+
     def test_missing_confidence_is_not_filtered(self):
         taxonomy = _taxonomy(self.TAXA, {k: "-" for k in self.TAXA})
         _, _, mapping = collapse_complexes(self.table, taxonomy,

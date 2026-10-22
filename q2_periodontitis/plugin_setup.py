@@ -128,7 +128,8 @@ plugin.methods.register_function(
     parameter_descriptions={
         'min_confidence': 'Features whose taxonomy Confidence is below this '
                           'value are assigned to "Other" (Resolution '
-                          '"low-confidence"). Features without a numeric '
+                          '"low-confidence") and never count as SMDI or '
+                          'PC2014 taxa. Features without a numeric '
                           'Confidence are never filtered. Default 0.0 (no '
                           'filtering).'
     },

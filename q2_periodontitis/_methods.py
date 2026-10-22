@@ -375,18 +375,22 @@ def validate_signature(signature):
     return sig
 
 
-def aggregate_counts(table, taxonomy, synonyms, level):
+def aggregate_counts(table, taxonomy, synonyms, level, exclude=None):
     """
     Sums the feature counts by species or genus name (samples x taxa).
-    Features without a name at that level are kept as their own units, keyed
-    by their full taxonomy string, so that the total of every sample is
-    unchanged.
+    Features without a name at that level, and features in `exclude` (e.g.
+    low-confidence ones), are kept as their own units, keyed by their full
+    taxonomy string, so that the total of every sample is unchanged.
     """
+    exclude = exclude or set()
     taxa = _taxon_series(taxonomy)
     feature_ids = list(table.ids(axis="observation"))
     units = []
     for f_id in feature_ids:
         tax_str = taxa.get(f_id, "")
+        if f_id in exclude:
+            units.append("low-confidence: %s" % f_id)
+            continue
         genus, species = parse_taxonomy_string(tax_str, synonyms)
         name = species if level == "species" else genus
         if name and "/" not in name:
@@ -424,7 +428,7 @@ def clr_microbiome(counts):
     return pd.DataFrame(clr, index=counts.index, columns=counts.columns)
 
 
-def compute_smdi(table, taxonomy, signature, synonyms):
+def compute_smdi(table, taxonomy, signature, synonyms, exclude=None):
     """
     Subgingival Microbial Dysbiosis Index (Chen, Marsh & Al-Hebshi 2022):
     the mean CLR abundance of the dysbiotic taxa minus the mean CLR abundance
@@ -432,13 +436,14 @@ def compute_smdi(table, taxonomy, signature, synonyms):
     at the signature's level. Signature taxa absent from the whole table are
     added as all-zero columns (that is, they receive the pseudocount), as
     they would be in a table merged with samples that contain them; a
-    warning lists them.
+    warning lists them. Features in `exclude` never count as signature taxa,
+    but their reads stay in the table.
 
     Returns (smdi, missing_taxa). Samples without reads get NaN.
     """
     sig = validate_signature(signature)
     level = sig["level"].iloc[0]
-    counts = aggregate_counts(table, taxonomy, synonyms, level)
+    counts = aggregate_counts(table, taxonomy, synonyms, level, exclude)
 
     if level == "species":
         names = [taxon_key(_canonical(t, synonyms)) for t in sig["taxon"]]
@@ -495,6 +500,7 @@ def collapse_complexes(
     w_matrix = np.zeros((len(feature_ids), len(COMPLEXES)))
     pc_vector = np.zeros(len(feature_ids))
     species_vector = np.zeros(len(feature_ids))
+    low_conf_features = set()
 
     for idx, f_id in enumerate(feature_ids):
         tax_str = str(taxa[f_id])
@@ -505,6 +511,7 @@ def collapse_complexes(
 
         low_conf = not np.isnan(conf) and conf < min_confidence
         if low_conf:
+            low_conf_features.add(f_id)
             complex_name, resolution = "Other", "low-confidence"
         else:
             complex_name, resolution = assign_feature_to_complex(
@@ -545,7 +552,8 @@ def collapse_complexes(
     if smdi_signature is not None and not smdi_signature.empty:
         signatures.append(("SMDI_custom", smdi_signature))
     for column, signature in signatures:
-        smdi, missing = compute_smdi(table, taxonomy, signature, synonyms)
+        smdi, missing = compute_smdi(table, taxonomy, signature, synonyms,
+                                     low_conf_features)
         if missing:
             warnings.warn(
                 "%s: %d signature taxa are absent from the table and enter "

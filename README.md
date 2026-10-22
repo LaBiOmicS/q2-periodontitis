@@ -66,7 +66,7 @@ qiime periodontitis collapse-complexes \
 | `--i-taxonomy` | `FeatureData[Taxonomy]` | `Taxon` and, optionally, `Confidence`. |
 | `--i-custom-mapping` | `SocranskyReference` (optional) | Extra or overriding taxon→complex entries (`taxon`, `complex`, optional `level` = `species`/`genus`). |
 | `--i-smdi-signature` | `DysbiosisSignature` (optional) | An additional signature (`taxon`, `direction` = `dysbiotic`/`normobiotic`, `level`), computed with the SMDI method as `SMDI_custom`. |
-| `--p-min-confidence` | `Float` 0–1 (default 0) | Features below this classifier confidence go to `Other` (`low-confidence`). |
+| `--p-min-confidence` | `Float` 0–1 (default 0) | Features below this classifier confidence go to `Other` (`low-confidence`) and are not counted as SMDI or PC2014 taxa. |
 
 **Outputs**
 
