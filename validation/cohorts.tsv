@@ -1,0 +1,17 @@
+cohort	accession	independent	meta	case_control	therapy_followups	therapy_arm_column	prognosis	clinical	region	platform	country	description
+SRP075100	SRP075100	yes	primary	yes	after-therapy			no	V4	Illumina MiSeq	?	Chen et al. 2018: health vs periodontitis, same tooth before/after non-surgical therapy
+PRJNA863881	PRJNA863881	yes	primary	yes				yes	V3-V4	Illumina MiSeq	Spain	Health, gingivitis, stage I-IV, with subject-level clinical measures
+PRJEB83770	PRJEB83770	yes	primary	yes				no	V3-V4	Illumina MiSeq	France	PERIDYSSEQ: health, gingivitis, periodontitis
+PRJNA1470369	PRJNA1470369	yes	primary	yes				stage	V3-V4	Illumina NovaSeq	China	Health vs stage I-IV periodontitis
+PRJNA1294584	PRJNA1294584	yes	primary	yes				stage	V3-V4	Illumina NovaSeq	Thailand	Control vs stage 2-4 periodontitis
+PRJNA773202	PRJNA773202	yes	primary	yes				no	V3-V4	Illumina MiSeq	Spain/Portugal	Systemically healthy subjects with or without periodontitis
+PRJNA773195	PRJNA773195	yes	region-only	yes				no	V1-V3	Illumina MiSeq	Spain/Portugal	Same samples as PRJNA773202, V1-V3
+PRJNA726254	PRJNA726254	yes	primary	yes	after-therapy			no	V4	Illumina MiSeq	USA	Health vs chronic periodontitis; same subjects after non-surgical therapy
+PRJNA786436	PRJNA786436	yes	no	no	3m		response	yes	V4	Ion Torrent PGM	Australia	Byrne et al. 2022: non-responding vs responding sites, baseline and 3 months
+PRJNA736618	PRJNA736618	yes	no	no	D1,D7,D90			no	V3-V4	Illumina MiSeq	?	Johnston et al. 2021: day 0, 1, 7 and 90 after full-mouth debridement
+PRJEB106816	PRJEB106816	yes	no	no	follow-up-2	arm		no	V3-V4	Illumina NovaSeq X	Germany	Elderly periodontitis: non-surgical therapy vs untreated control
+SRP051201	SRP051201	no	non-independent	yes				no	V1-V3	454 GS FLX	?	Kirst et al. 2015 (SMDI training set)
+SRP009299_V12	SRP009299	no	non-independent	yes				no	V1-V2	454 GS FLX	?	Griffen et al. 2012, V1-V2 (SMDI training set)
+SRP009299_V4	SRP009299	no	region-only	yes				no	V4	454 GS FLX	?	Griffen et al. 2012, V4 of the same libraries
+SRP226726	SRP226726	no	non-independent	yes				no	V3-V4	Illumina MiSeq	?	Pei et al. 2020 (SMDI test set)
+SRP062274	SRP062274	no	no	no	3m,6m,12m	arm	response	no	V5-V7	454 GS FLX	?	Bizzarro et al. 2016: SRP +/- antibiotics (baseline was an SMDI test set)
