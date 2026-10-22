@@ -3,9 +3,8 @@ message: "If you use q2-periodontitis in your research, please cite it as below.
 authors:
   - family-names: "Menegidio"
     given-names: "Fabiano"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
 title: "q2-periodontitis: QIIME 2 Plugin for Subgingival Biofilm Ecological Characterization, Socransky Complexes Collapse, and Dysbiosis Indices"
-version: 0.1.0
+version: 2026.1.0
 date-released: 2026-08-31
 url: "https://github.com/LaBiOmicS/q2-periodontitis"
 keywords:
@@ -14,5 +13,5 @@ keywords:
   - microbiome
   - socransky-complexes
   - dysbiosis-index
-  - oral-metagenomics
+  - 16S-rRNA-amplicon
   - bioinformatics

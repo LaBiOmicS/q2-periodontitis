@@ -105,9 +105,14 @@ inspected:
 
 Two consequences follow from the original definition.
 
-* SMDI values depend on the table they are computed in. The pseudocount
-  and the set of taxa in the CLR mean both depend on the other samples and
-  features. Compare SMDI values computed in the same run.
+* SMDI values depend on the table they are computed in, through the
+  pseudocount: it is taken from the smallest non-zero relative abundance
+  of the whole table, so it depends on the other samples and features.
+  Compare SMDI values computed in the same run. The CLR centre itself
+  cancels out: since the SMDI is a difference of two CLR means of the same
+  sample, it equals `mean ln(p + ε)` over the dysbiotic taxa minus
+  `mean ln(p + ε)` over the normobiotic taxa. The other taxa of the table
+  matter only through ε.
 * Signature taxa absent from the whole table enter as all-zero columns,
   that is, at the pseudocount. They would appear that way in a table
   merged with samples that contain them. The plugin warns and lists them.
