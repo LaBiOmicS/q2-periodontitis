@@ -408,7 +408,7 @@ def aggregate_counts(table, taxonomy, synonyms, level, exclude=None):
                         columns=list(uniques))
 
 
-def clr_microbiome(counts):
+def clr_microbiome(counts, pseudocount=None):
     """
     Centered log-ratio transform as implemented by the R package microbiome
     (v1.6.0, transform(x, "clr")), the implementation used to define the
@@ -416,19 +416,29 @@ def clr_microbiome(counts):
     equal to half the smallest non-zero relative abundance of the whole
     table is added to every entry, and each sample is centred on the mean
     of its natural logs.
+
+    With `pseudocount`, that fixed value is added to every relative
+    abundance instead, so that a sample's CLR no longer depends on the
+    other samples of the table.
     """
     depth = counts.sum(axis=1)
     rel = counts.div(depth.where(depth > 0), axis=0)
     values = rel.to_numpy(dtype=float)
-    finite = values[np.isfinite(values)]
-    if (finite == 0).any():
-        values = values + finite[finite > 0].min() / 2.0
+    if pseudocount is not None:
+        if not pseudocount > 0:
+            raise ValueError("The pseudocount must be greater than 0.")
+        values = values + pseudocount
+    else:
+        finite = values[np.isfinite(values)]
+        if (finite == 0).any():
+            values = values + finite[finite > 0].min() / 2.0
     logs = np.log(values)
     clr = logs - logs.mean(axis=1, keepdims=True)
     return pd.DataFrame(clr, index=counts.index, columns=counts.columns)
 
 
-def compute_smdi(table, taxonomy, signature, synonyms, exclude=None):
+def compute_smdi(table, taxonomy, signature, synonyms, exclude=None,
+                 pseudocount=None):
     """
     Subgingival Microbial Dysbiosis Index (Chen, Marsh & Al-Hebshi 2022):
     the mean CLR abundance of the dysbiotic taxa minus the mean CLR abundance
@@ -437,7 +447,8 @@ def compute_smdi(table, taxonomy, signature, synonyms, exclude=None):
     added as all-zero columns (that is, they receive the pseudocount), as
     they would be in a table merged with samples that contain them; a
     warning lists them. Features in `exclude` never count as signature taxa,
-    but their reads stay in the table.
+    but their reads stay in the table. `pseudocount` is passed to
+    clr_microbiome (None: the original, table-dependent pseudocount).
 
     Returns (smdi, missing_taxa). Samples without reads get NaN.
     """
@@ -453,7 +464,7 @@ def compute_smdi(table, taxonomy, signature, synonyms, exclude=None):
     for name in missing:
         counts[name] = 0.0
 
-    clr = clr_microbiome(counts)
+    clr = clr_microbiome(counts, pseudocount)
     dysbiotic = [n for n, d in zip(names, sig["direction"])
                  if d == "dysbiotic"]
     normobiotic = [n for n, d in zip(names, sig["direction"])
@@ -468,7 +479,8 @@ def collapse_complexes(
     taxonomy: pd.DataFrame,
     custom_mapping: pd.DataFrame = None,
     smdi_signature: pd.DataFrame = None,
-    min_confidence: float = 0.0
+    min_confidence: float = 0.0,
+    smdi_pseudocount: float = None
 ) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
     """
     Collapses a feature table into Socransky complexes and computes the SMDI
@@ -476,6 +488,8 @@ def collapse_complexes(
     """
     if not 0.0 <= min_confidence <= 1.0:
         raise ValueError("min_confidence must be within [0, 1].")
+    if smdi_pseudocount is not None and not 0.0 < smdi_pseudocount < 1.0:
+        raise ValueError("smdi_pseudocount must be within (0, 1).")
 
     synonyms = load_synonyms()
     reference = merge_references(load_complex_reference(), custom_mapping)
@@ -553,7 +567,7 @@ def collapse_complexes(
         signatures.append(("SMDI_custom", smdi_signature))
     for column, signature in signatures:
         smdi, missing = compute_smdi(table, taxonomy, signature, synonyms,
-                                     low_conf_features)
+                                     low_conf_features, smdi_pseudocount)
         if missing:
             warnings.warn(
                 "%s: %d signature taxa are absent from the table and enter "

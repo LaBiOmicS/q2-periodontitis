@@ -41,6 +41,10 @@ public clinical data (see `docs/VALIDATION.md`).
   `--p-subject-column`.
 
 ### Added
+- `--p-smdi-pseudocount` for `collapse-complexes`: an optional fixed
+  pseudocount for the SMDI CLR, which makes each sample's SMDI
+  independent of the rest of the table. When it is not set, the
+  published, table-dependent pseudocount is used, as before.
 - **SMDI** (Chen, Marsh & Al-Hebshi 2022), computed exactly as in the
   original implementation (R *microbiome* 1.6.0 CLR). Both are built in
   and always computed: `SMDI`, the 49 species with MDG ≥ 0.4 from the

@@ -101,7 +101,8 @@ plugin.methods.register_function(
         'smdi_signature': DysbiosisSignature
     },
     parameters={
-        'min_confidence': Float % Range(0, 1, inclusive_end=True)
+        'min_confidence': Float % Range(0, 1, inclusive_end=True),
+        'smdi_pseudocount': Float % Range(0, 1, inclusive_start=False)
     },
     outputs=[
         ('complex_table', SocranskyComplexes),
@@ -131,7 +132,17 @@ plugin.methods.register_function(
                           '"low-confidence") and never count as SMDI or '
                           'PC2014 taxa. Features without a numeric '
                           'Confidence are never filtered. Default 0.0 (no '
-                          'filtering).'
+                          'filtering).',
+        'smdi_pseudocount': 'Fixed pseudocount added to every relative '
+                            'abundance before the CLR of the SMDI indices. '
+                            'By default (not set) the original definition '
+                            'is used: half the smallest non-zero relative '
+                            'abundance of the whole table, so SMDI values '
+                            'depend on the other samples of the table. Set '
+                            'it (e.g. 1e-6) to make each sample\'s SMDI '
+                            'independent of the table it is computed in; '
+                            'values are then not identical to the '
+                            'published definition.'
     },
     output_descriptions={
         'complex_table': 'Relative abundance of each Socransky complex '

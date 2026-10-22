@@ -381,6 +381,43 @@ class TestCollapseComplexes(CollapseFixture):
         self.assertAlmostEqual(indices.loc["S1", "SMDI"], dys - norm, places=12)
         self.assertTrue(np.isnan(indices.loc["S4", "SMDI"]))
 
+    def test_fixed_smdi_pseudocount(self):
+        eps = 1e-6
+        _, indices, _ = collapse_complexes(self.table, self.taxonomy,
+                                           smdi_pseudocount=eps)
+        self.assertAlmostEqual(indices.loc["S1", "SMDI_simplified"],
+                               math.log(eps / (0.2 + eps)), places=12)
+        # S3 has no Actinomyces: all three genera sit at the pseudocount
+        self.assertAlmostEqual(indices.loc["S3", "SMDI_simplified"], 0.0,
+                               places=12)
+        ln = math.log
+        dys = (ln(0.1 + eps) + 30 * ln(eps)) / 31
+        norm = (ln(0.2 + eps) + ln(0.1 + eps) + 16 * ln(eps)) / 18
+        self.assertAlmostEqual(indices.loc["S1", "SMDI"], dys - norm,
+                               places=12)
+        self.assertTrue(np.isnan(indices.loc["S4", "SMDI"]))
+
+    def test_fixed_pseudocount_is_table_independent(self):
+        eps = 1e-5
+        _, full, _ = collapse_complexes(self.table, self.taxonomy,
+                                        smdi_pseudocount=eps)
+        alone = self.table.filter(["S1"], inplace=False)
+        _, single, _ = collapse_complexes(alone, self.taxonomy,
+                                          smdi_pseudocount=eps)
+        self.assertAlmostEqual(full.loc["S1", "SMDI"], single.loc["S1", "SMDI"],
+                               places=12)
+        # The original pseudocount changes when S2 (1000 reads) is removed
+        _, full0, _ = collapse_complexes(self.table, self.taxonomy)
+        _, single0, _ = collapse_complexes(alone, self.taxonomy)
+        self.assertNotAlmostEqual(full0.loc["S1", "SMDI"],
+                                  single0.loc["S1", "SMDI"], places=6)
+
+    def test_invalid_smdi_pseudocount(self):
+        for value in (0.0, -1e-6, 1.0):
+            with self.assertRaisesRegex(ValueError, "smdi_pseudocount"):
+                collapse_complexes(self.table, self.taxonomy,
+                                   smdi_pseudocount=value)
+
     def test_signature_taxa_missing_from_table_warn(self):
         sig = pd.DataFrame({"taxon": ["Filifactor alocis",
                                       "Streptococcus gordonii"],
@@ -532,6 +569,15 @@ class TestClr(CollapseFixture):
         np.testing.assert_allclose(clr.loc[["S1", "S2", "S3"]].sum(axis=1), 0,
                                    atol=1e-12)
         self.assertTrue(clr.loc["S4"].isna().all())
+
+    def test_fixed_pseudocount(self):
+        counts = aggregate_counts(self.table, self.taxonomy, {}, "genus")
+        clr = clr_microbiome(counts, pseudocount=1e-3)
+        rel = counts.loc["S2"] / 1000 + 1e-3
+        np.testing.assert_allclose(clr.loc["S2"],
+                                   np.log(rel) - np.log(rel).mean())
+        with self.assertRaisesRegex(ValueError, "greater than 0"):
+            clr_microbiome(counts, pseudocount=0)
 
     def test_unresolved_features_keep_their_reads(self):
         taxa = dict(self.TAXA, F5="d__Bacteria; g__uncultured")

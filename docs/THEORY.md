@@ -113,6 +113,13 @@ Two consequences follow from the original definition.
   sample, it equals `mean ln(p + ε)` over the dysbiotic taxa minus
   `mean ln(p + ε)` over the normobiotic taxa. The other taxa of the table
   matter only through ε.
+* **Fixed pseudocount (optional).** `--p-smdi-pseudocount` replaces the
+  table-dependent ε by a fixed value added to every relative abundance.
+  The SMDI of a sample then depends on that sample only, and values from
+  different runs can be compared. The values are not identical to the
+  published definition, so the published cut-offs may not transfer
+  exactly. `docs/VALIDATION.md` reports how much this matters. The default
+  keeps the original definition.
 * Signature taxa absent from the whole table enter as all-zero columns,
   that is, at the pseudocount. They would appear that way in a table
   merged with samples that contain them. The plugin warns and lists them.
