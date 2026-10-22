@@ -1,0 +1,103 @@
+accession	runs	library_strategy	platform	fastq_gb	title	decision	reason
+PRJNA1153303	101	101 AMPLICON	ILLUMINA	1.6	The Link Between Periodontal Diseases and Ulcerative Colitis Through Subgingival and Gut Mucosal Microbiome	excluded	population selected for a systemic condition
+PRJNA1238390	30	30 AMPLICON	ILLUMINA	263.6	Metagenomic Insights into the Subgingival Microbiome in Periodontal Health and Different Grades of Periodontitis	excluded	over the 30 GB budget
+PRJNA1345392	109	109 AMPLICON	ILLUMINA	0.6	subgingival plaque of periodontitis through 16S rRNA gene high-throughput	excluded	not human
+PRJNA1433695	24	24 AMPLICON	ILLUMINA	0.2	The Effect of Normobaric Oxygen Therapy on Subgingival and Gut Microbiota in Rats with Periodontitis	excluded	not human
+PRJNA1470369	148	148 AMPLICON	ILLUMINA	1.7	16S rRNA Gene Sequencing of Subgingival Microbiota in Patients with Periodontitis at Different Stages	included	health vs stage I-IV periodontitis in BioSample host_disease
+PRJNA182759	31	31 AMPLICON	LS454	0.0	Investigation of the Effect of Type 2 Diabetes on Subgingival Plaque Microbiota in Periodontitis Patients by High-Throughput 16S rDNA Sequencing	excluded	population selected for a systemic condition
+PRJNA391236	21	21 AMPLICON	ILLUMINA	21.2	Subgingival microbiome of from patients suffering from periodontitis and liver cirrhosis	excluded	population selected for a systemic condition
+PRJNA658726	40	40 AMPLICON	OXFORD_NANOPORE	23.0	The impact of smoking different tobacco types on the subgingival microbiome and periodontal health: a pilot study	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJNA773195	124	124 AMPLICON	ILLUMINA	7.7	The subgingival microbiota communities in periodontal health and periodontitis studied by sequencing the V1-V3 16S rRNA gene region.	included	health vs periodontitis, systemically healthy, V1-V3; same samples as PRJNA773202 (region robustness)
+PRJNA828047	60	60 AMPLICON	ILLUMINA	0.5	Subgingival microbiome in stages of periodontitis	excluded	group or subject labels not recoverable from public metadata
+PRJNA874070	202	202 AMPLICON	ILLUMINA	7.2	Effect of periodontal therapy on the subgingival microbiome	excluded	population selected for a systemic condition
+PRJNA978995	26	26 AMPLICON	ILLUMINA	0.1	Effects of periodontal pathogens Porphyromonas gingivalis and Aggregatibacter actinomucetemcomitans on modeling subgingival microbiome.	excluded	not human
+PRJEB9896	92	92 AMPLICON	LS454	0.4	Differences in the feline subgingival microbiota in health, gingivitis and mild periodontitis	excluded	not human
+PRJNA1294584	100	100 AMPLICON	ILLUMINA	2.2	The Impact of Shifts in Subgingival Plaque Microbiota on the Severity of Periodontitis	included	control vs stage 2-4 in BioSample title
+PRJNA274944	224	224 AMPLICON	ILLUMINA	4.1	Subgingival samples from Healthy / Periodontitis subjects Targeted Locus (Loci)	excluded	group or subject labels not recoverable from public metadata
+PRJNA606501	220	220 AMPLICON	ILLUMINA	4.7	Subgingival microbiome in periodontitis patients and their children	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA773202	124	124 AMPLICON	ILLUMINA	10.8	The subgingival microbiota communities in periodontal health and periodontitis studied by sequencing the V3-V4 16S rRNA gene region.	included	health vs periodontitis, systemically healthy, V3-V4
+PRJNA863881	124	124 AMPLICON	ILLUMINA	9.3	Study of subgingival microbiome in periodontal health, gingivitis and periodontitis	included	already processed: health, gingivitis, stage I-IV with clinical measures
+PRJNA985445	92	92 AMPLICON	ILLUMINA	6.0	Composition of subgingival microbiota associated with periodontitis and diagnosis of malignancy A cross-sectional study	excluded	population selected for a systemic condition
+PRJEB17957	20	20 AMPLICON	ILLUMINA	0.0	Subgingival dysbiosis in smoker and non-smoker patients with chronic periodontitis	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJDB16657	66	66 AMPLICON	ILLUMINA	0.3	Profiling of bacterial communities associated with periodontal disease severity in dog subgingival plaque	excluded	not human
+PRJDB18561	31	31 AMPLICON	ILLUMINA	1.4	the differences between supragingival and subgingival calculus by analyzing their bacterial compositions	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJDB2403	51	51 AMPLICON	LS454	0.0	Analysis microbial composition of peri-implantitis and periodontitis by 16S rRNA genes pyrosequencing	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJDB39597	244	244 AMPLICON	ILLUMINA	1.9	Study on oral multi-site microbiota in patients with papillary thyroid carcinoma under different periodontal conditions (PRJCA046597)	excluded	population selected for a systemic condition
+PRJDB43920	36	36 AMPLICON	PACBIO_SMRT	0.0	Microbial single-cell transcriptomics of subgingival microbiome in health control and periodontitis (PRJCA037159)	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJDB5157	112	112 AMPLICON	ION_TORRENT	0.4	Characterization of microbiome of various oral niches in patients with periodontitis	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJEB104661	156	78 AMPLICON      78 WGS	ILLUMINA,PACBIO_SMRT	401.7	Korean oral microbiome across different periodontal health	excluded	over the 30 GB budget
+PRJEB106816	142	142 AMPLICON	ILLUMINA	1.1	Non-surgical periodontal therapy and the oral microbiome in elderly periodontitis	included	non-surgical therapy vs control arm, subgingival baseline and follow-up
+PRJEB50261	1129	1129 AMPLICON	ILLUMINA	12.4	Oral Infections Glucose Intolerance and Insulin Resistance Study - subgingival plaque wave 2	excluded	population selected for a systemic condition
+PRJEB83770	135	135 AMPLICON	ILLUMINA	7.6	PERIDYSSEQ-bac: Periodontal Dysbiosis Analysis by Sequencing - bacterial metataxonomic analysis	included	healthy / gingivitis / periodontitis in BioSample attributes
+PRJEB87651	183	183 AMPLICON	ILLUMINA	5.4	The potential impact of adjunctive consumption of probiotics in stage II and III periodontitis patients 12 weeks post non-surgical periodontal treatment	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJNA1087153	45	45 AMPLICON	OXFORD_NANOPORE	0.0	sequencing data for a comparison of oral bacteriome associated with periodontal pockets for patients with and without diabetes mellitus in Uganda.	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJNA1158855	240	240 AMPLICON	ILLUMINA	1.3	Oral and fecal microbiomes of parents with periodontitis, periodontally healthy individuals, and their children	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA1188528	64	64 AMPLICON	ILLUMINA	0.5	The microbial composition of chronic periodontitis in shallow, medium, and deep periodontal pockets	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA1197762	39	39 AMPLICON	ILLUMINA	0.4	Bidirectional effects of Bacteroides in health based on 16S rRNA gene sequencing in people with different ages and periodontitis stages	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA1200033	85	85 AMPLICON	ILLUMINA	2.4	The blood pressure lowering effect of beetroot juice is impaired in periodontitis and recovered after periodontal treatment	excluded	population selected for a systemic condition
+PRJNA1288221	148	148 AMPLICON	DNBSEQ	1.1	Subgingival microbial community after Papilla preservation flap surgery or endoscope-assisted subgingival debridement	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJNA1307442	108	108 AMPLICON	ILLUMINA	3.8	Combined effects of nitrate and antimicrobial compounds on in vitro subgingival biofilms	excluded	not human
+PRJNA1429363	60	60 AMPLICON	ILLUMINA	0.5	Human subgingival plaque metagenome	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA1530384	67	67 AMPLICON	PACBIO_SMRT	0.6	alteration of subgingival microbiome in PD	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJNA196401	30	30 AMPLICON	LS454	0.1	Subgingival plaque Metagenome	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA248613	150	150 AMPLICON	LS454	0.0	Human oral microbiota in periodontitis and health	excluded	subgingival plaque only from periodontitis subjects
+PRJNA379905	300	300 AMPLICON	ILLUMINA	2.4	subgingival microbiome Metagenome	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA552608	192	192 AMPLICON	ILLUMINA	2.2	Alterations of subgingival microbiota during full-fixed appliance orthodontic treatment – a prospective study	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA625189	86	86 AMPLICON	ILLUMINA	10.9	Oral microbiome in Periodontitis patients with Alzheimer's disease	excluded	population selected for a systemic condition
+PRJNA649803	110	110 AMPLICON	ILLUMINA	2.8	Interdental and subgingival microbiota affect the tongue microbial ecology and oral malodour in health, gingivitis and periodontitis	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJNA658372	298	298 AMPLICON	ILLUMINA	18.2	Oral microbiome comparision among healthy, peri-implantitis and periodontitis	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJNA690677	39	39 AMPLICON	ILLUMINA	0.5	Subgingival plaque Genome sequencing	excluded	not human
+PRJNA763726	32	32 AMPLICON	ILLUMINA	0.3	Oral Microbiomes of Elderly Patients with Initial Periodontitis	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA778749	201	201 AMPLICON	ILLUMINA	0.8	Antibiotic support of subgingival therapy affects the oral microbiome of periodontitis patients positively and remarkably, but only temporarily	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJNA851579	94	94 AMPLICON	LS454	0.0	Diversity loss in subgingival bacterial microbiota of children with palatal expansion: A prospective case control study	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA870274	70	70 AMPLICON	ILLUMINA	1.7	Subgingival Microbiome in Rheumatoid Arthritis Patients and the Matched Control	excluded	population selected for a systemic condition
+PRJNA933120	146	146 AMPLICON	ILLUMINA,PACBIO_SMRT	3.2	Effect of periodontitis on the oral and intestinal microbiota.	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA951622	111	111 AMPLICON	ILLUMINA	1.0	Nitrate and a nitrate-reducing Rothia aeria strain as potential prebiotic or symbiotic treatments for periodontitis	excluded	not human
+PRJEB18651	178	178 AMPLICON	ILLUMINA	15.2	DO WE TREAT OUR PATIENTS OR RATHER PERIODONTAL MICROBES WITH ADJUNCTIVE ANTIBIOTICS IN PERIODONTAL THERAPY? – A 16S RDNA MICROBIAL COMMUNITY ANALYSIS	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJEB28345	381	381 AMPLICON	ILLUMINA	28.8	NO DIFFERENCES IN MICROBIOME CHANGES BETWEEN ANTI-ADHESIVE AND ANTIBACTERIAL INGREDIENTS IN TOOTHPASTES DURING PERIODONTAL THERAPY	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJEB35812	120	120 AMPLICON	ILLUMINA	5.7	Significant shifts in the microbiomes of smokers with periodontitis after periodontal therapy with adjunctive antibiotics as revealed by 16S rDNA amplicon next generation sequencing	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJEB6047	72	72 AMPLICON	ILLUMINA	0.7	Community structure analysis in chronic periodontitis and novel oral sampling sites for detecting disease indicators	excluded	group or subject labels not recoverable from public metadata
+PRJNA1028864	28	28 AMPLICON	ILLUMINA	0.1	Microbiome analysis of Aggregatibacter actinomycetemcomitans JP2 clone-associated aggressive periodontitis	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA1190949	50	50 AMPLICON	ILLUMINA	0.5	Pre-Extraction Periodontal and Peri-Implant Microbiome	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA269205	100	100 AMPLICON	LS454	0.1	Human oral subgingival communities	duplicate	same runs as SRP051201 (Kirst et al. 2015)
+PRJNA289294	147	147 AMPLICON	LS454	0.2	Subgingival microbiome Metagenome	included (not independent)	SRP062274, Bizzarro et al. 2016: baseline samples were an SMDI test set
+PRJNA580506	48	48 AMPLICON	ILLUMINA	0.6	Oral microbiome in molar-incisor pattern periodontitis	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA682523	130	121 AMPLICON       9 WGS	ILLUMINA	4.8	Dissection of read-based and genome-based metagenomics of subgingival biofilms and saliva microbial communities in chronic periodontitis	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA726254	43	43 AMPLICON	ILLUMINA	0.8	Subgingival plaque before and after non-surgical therapy	included	healthy vs chronic periodontitis, and paired before/after therapy
+PRJNA753125	88	88 AMPLICON	ILLUMINA	0.7	Efficacy of Amixicile as a Targeted Anti-Periodontitis Therapy	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJNA786436	44	44 AMPLICON	ION_TORRENT	0.9	Microbiome profile of non-responding and responding periodontal pockets following non-surgical periodontal treatment	included	already processed: responding vs non-responding sites, baseline and 3 months
+PRJNA796273	1204	1204 AMPLICON	ILLUMINA	52.2	Oral microbiome and periodontitis: a prospective study in postmenopausal women	excluded	over the 30 GB budget
+PRJNA884825	120	120 AMPLICON	ILLUMINA	1.3	subgingival metagenome	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA892459	88	88 AMPLICON	ILLUMINA	1.0	Periodontal disease associated microbiota before and after antimicrobial therapy Metagenome	excluded	intervention other than mechanical therapy (antibiotics, probiotics, drugs, surgery) or arm labels not public
+PRJEB66327	100	100 AMPLICON	ILLUMINA	4.8	Periodontitis in metabolic syndrome	excluded	population selected for a systemic condition
+PRJNA321534	238	238 AMPLICON	ILLUMINA	0.8	Casey periodontitis 2016	duplicate	same runs as SRP075100 (Chen et al. 2018), already included
+PRJNA477241	72	72 AMPLICON	ILLUMINA	1.7	Oral microbiota in healthy versus diseased periodontal and peri-implant niches	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJDB5944	75	75 AMPLICON	LS454	0.0	Subgingival microbiota of 30 Japanese healthy or periodontitis adults	excluded	group or subject labels not recoverable from public metadata
+PRJNA656079	54	54 AMPLICON	ILLUMINA	0.5	Subgingival plaque of second molars in response to nonimpacted third molar removal	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA725103	84	84 AMPLICON	ILLUMINA	2.9	Homo sapiens Metagenome	excluded	group or subject labels not recoverable from public metadata
+PRJNA736618	152	152 AMPLICON	ILLUMINA	3.2	IRAPT microbiome	included	already processed: day 0, 1, 7, 90 after full-mouth debridement
+PRJNA911985	40	40 AMPLICON	ILLUMINA	1.5	The oral microbiome of a family including Papillon-Lefevre-Syndrome patients and clinically healthy members	excluded	population selected for a systemic condition
+PRJNA982727	184	184 AMPLICON	ILLUMINA	2.5	Defining Porphyromonas gingivalis strains	excluded	not human
+PRJEB51017	889	889 AMPLICON	ILLUMINA	38.2	Long-term microbiota changes with antibiotics	excluded	over the 30 GB budget
+PRJEB57333	378	378 AMPLICON	ILLUMINA	4.1	Finnish Oral Health Studies in Older Adults (FINORAL)	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJEB76903	54	54 AMPLICON	ILLUMINA	5.3	Dental therapy in children with PID	excluded	population selected for a systemic condition
+PRJEB82979	287	287 AMPLICON	ILLUMINA	3.1	Oral Secreto	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJEB89223	188	188 AMPLICON	ILLUMINA	7.6	Fasting and Oral Microbiome	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA324274	101	101 AMPLICON	ILLUMINA	3.7	human oral metagenome Raw sequence reads	excluded	no health group or no therapy contrast (sites, pocket depth, phenotype, smoking within periodontitis)
+PRJNA325500	141	141 AMPLICON	ILLUMINA	1.7	Subgingival microbiome and Rheumatic Diseases	excluded	population selected for a systemic condition
+PRJNA509532	145	145 AMPLICON	ILLUMINA	1.5	Studies of microbial diversity on human stomatology	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA579567	73	73 AMPLICON	ILLUMINA	2.5	Modelling of subgingival microbiome part 1	excluded	not human
+PRJNA643400	106	106 AMPLICON	ILLUMINA	1.3	Porphyromonas-gingivalis-enriched microcosm biofilms	excluded	not human
+PRJNA387475	66	60 AMPLICON       6 RNA-Seq	ILLUMINA	30.1	Oral microbes- subgingival plaque Raw sequence reads	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJNA416501	68	68 AMPLICON	ILLUMINA	0.1	Hemoparo	excluded	population selected for a systemic condition
+PRJNA564282	59	59 AMPLICON	ILLUMINA	0.4	Comparison of the oral ecosystem in healthy and congenital neutropenia patients.	excluded	population selected for a systemic condition
+PRJDB5440	140	140 AMPLICON	ILLUMINA	0.8	Exploring Human Oral Microbiome	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJEB19122	287	287 AMPLICON	ILLUMINA	0.5	Meta-omics analysis of periodontal pocket microbial communities pre- and post-treatment	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJEB51987	48	48 AMPLICON	PACBIO_SMRT	0.6	Xylitol chewing gum reduces bacteria	excluded	not short-read 16S amplicon of subgingival plaque (long reads, other sample, metatranscriptome)
+PRJEB85284	258	258 AMPLICON	ILLUMINA	4.4	Yeast cell wall derivatives as a potential strategy for modulating oral microbiota and dental plaque biofilm	excluded	not periodontitis (orthodontics, implants, extraction, children, general population, diet, products)
+PRJNA1023696	238	238 AMPLICON	PACBIO_SMRT	4.2	Oral Microbiome of Cats with Chronic Gingivostomatitis (FCGS)	excluded	not human
+SRP012422		AMPLICON			Abusleme et al. 2013 (SMDI training)	excluded (not independent)	runs are multiplexed pools ('22PBsamples'); per-sample barcodes not in public metadata
+SRP009299		AMPLICON			Griffen et al. 2012 (SMDI training)	included (not independent)	V1-V2 and V4 of the same samples
+SRP051201		AMPLICON			Kirst et al. 2015 (SMDI training)	included (not independent)	already processed
+SRP226726		AMPLICON			Pei et al. 2020 (SMDI test)	included (not independent)	already processed
+SRP075100		AMPLICON			Chen et al. 2018	included	already processed: health vs periodontitis and therapy
